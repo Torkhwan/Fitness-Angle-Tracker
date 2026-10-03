@@ -12,7 +12,13 @@ MediaPipe ใช้แค่ดึงพิกัดข้อต่อ ส่ว
 
 ## 1. แบ่งงาน
 
-เลือกงานคนละ 1 งาน แล้วใส่ชื่อกับ branch ของตัวเองในตาราง (วิธีแก้: เปิดไฟล์นี้บน GitHub กดรูปดินสอ แก้แถวของตัวเอง แล้ว Commit)
+เลือกงานคนละ 1 งาน โดยกดรับงานในแท็บ **Issues** ของ repo (ไม่ต้องแก้ไฟล์นี้)
+
+1. เปิดหน้า repo บน GitHub → แท็บ **Issues**
+2. เปิด issue ของงานที่อยากทำ (งาน A / B / C / D) ถ้ามีรูปโปรไฟล์ของคนอื่นอยู่ที่ช่อง Assignees แล้ว ให้เลือกงานอื่น
+3. แถบขวา ช่อง **Assignees** → กด **assign yourself**
+
+ตารางด้านล่างพราวจะใส่ชื่อให้หลังทุกคนเลือกครบ
 
 branch ของแต่ละคน: `Praw` `Tonlew` `tonkla` `Jennie`
 
@@ -39,7 +45,7 @@ branch ของแต่ละคน: `Praw` `Tonlew` `tonkla` `Jennie`
 
 | วันที่ | สิ่งที่ต้องเสร็จ |
 |---|---|
-| 5 ต.ค. 69 | ทุกคนเลือกงาน ใส่ชื่อในตาราง สร้าง branch ของตัวเอง |
+| 5 ต.ค. 69 | ทุกคนกดรับงานในแท็บ Issues และเลือก branch ของตัวเอง |
 | 6 ต.ค. 69 | งาน B merge เข้า `main` |
 | 7 ต.ค. 69 | งาน A merge เข้า `main` |
 | 8 ต.ค. 69 | งาน C ส่วน `analyze.py` merge เข้า `main` → `python selftest.py` ต้องผ่านทั้งหมด |
@@ -140,15 +146,13 @@ python pose_coach.py --exercise squat --camera 0
 2. แท็บ GitHub.com → เลือก repo ของโครงงาน
 3. Local path เลือกที่เก็บที่หาง่าย เช่น Desktop → กด Clone
 
-**สร้าง branch ของตัวเอง**
+**เลือก branch ของตัวเอง** (สร้างไว้ให้แล้ว ไม่ต้องสร้างใหม่)
 
 1. ดูแถบบน ช่องกลางเขียนว่า Current branch `main` → กดที่ช่องนั้น
-2. กด New branch
-3. Name ใส่ชื่อ branch ของตัวเองตามตารางข้อ 1 (`Praw` / `Tonlew` / `tonkla` / `Jennie`) สะกดให้ตรง
-4. กด Create branch
-5. กด **Publish branch** (ปุ่มสีน้ำเงินขวาบน) เพื่อให้ branch ขึ้นไปอยู่บน GitHub
+2. ในรายการใต้หัวข้อ Other branches กดชื่อ branch ของตัวเองตามตารางข้อ 1 (จะขึ้นเป็น `origin/Praw` / `origin/Tonlew` / `origin/tonkla` / `origin/Jennie`)
+3. ช่อง Current branch ต้องเปลี่ยนเป็นชื่อตัวเอง
 
-เสร็จแล้วช่อง Current branch ต้องเป็นชื่อตัวเอง
+ห้ามกด New branch และห้ามเลือก branch ของเพื่อน
 
 **เปิดใน VS Code:** เมนู Repository → Open in Visual Studio Code
 
