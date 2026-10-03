@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# รูปถ่ายคนและรูปผลลัพธ์ (CSV เก็บพิกัดไว้ครบแล้ว)
+photos/
+results/
+*_result.jpg
+
+# โมเดล MediaPipe โปรแกรมดาวน์โหลดเองตอนรันครั้งแรก
+pose_landmarker_full.task
+
+# Windows / Office
+Thumbs.db
+desktop.ini
+~$*
