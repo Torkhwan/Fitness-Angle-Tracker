@@ -17,43 +17,67 @@ from vector import norm
 #
 def translation(tx, ty):
     """T(tx, ty) เลื่อนจุด"""
-    raise NotImplementedError("TODO(A)")
-
+    return np.array([[1, 0, tx],
+                     [0, 1, ty],
+                     [0, 0, 1]
+                    ], dtype=float)
 
 def rotation(cos_t, sin_t):
     """R(θ) หมุนทวนเข็ม รับ cos θ, sin θ  (ส่ง sin เป็นลบเพื่อได้ R(−θ))"""
-    raise NotImplementedError("TODO(A)")
-
+    return np.array([[cos_t, -sin_t, 0],
+                     [sin_t, cos_t, 0],
+                     [0, 0, 1]
+                    ], dtype=float)
 
 def scaling(s):
     """S(s) ย่อขยายเท่ากันทั้งสองแกน"""
-    raise NotImplementedError("TODO(A)")
-
+    return np.array([[s, 0, 0],
+                     [0, s, 0],
+                     [0, 0, 1]
+                    ], dtype=float)
 
 def reflect_x():
     """Fx กลับเครื่องหมาย x (สะท้อนซ้าย-ขวา)"""
-    raise NotImplementedError("TODO(A)")
-
+    return np.array([[-1, 0, 0],
+                     [0, 1, 0],
+                     [0, 0, 1]
+                    ], dtype=float)
 
 def reflect_y():
     """Fy กลับเครื่องหมาย y (สะท้อนบน-ล่าง)"""
-    raise NotImplementedError("TODO(A)")
-
+    return np.array([[1, 0, 0],
+                     [0, -1, 0],
+                     [0, 0, 1]
+                    ], dtype=float)
 
 def det3(M):
     """det ของเมทริกซ์ 3×3 ด้วย cofactor expansion ตามแถวแรก (ห้ามใช้ np.linalg.det)"""
-    raise NotImplementedError("TODO(A)")
+    a, b, c = M[0]
+    d, e, f = M[1]
+    g, h, i = M[2]
+    return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g)
 
 
 def gauss_jordan_inverse(M):
     """[M | I] → [I | M⁻¹] ด้วย Gauss-Jordan elimination (ห้ามใช้ np.linalg.inv)
     ถ้า pivot เป็น 0 ให้ raise ValueError("Singular matrix (det = 0)")"""
-    raise NotImplementedError("TODO(A)")
+    n = M.shape[0]
+    aug = np.hstack([M.astype(float), np.eye(n)])
+    for col in range(n):
+        pivot = max(range(col, n), key=lambda r: abs(aug[r, col]))
+        if abs(aug[pivot, col]) < 1e-12:
+            raise ValueError("Singular matrix (det = 0)")
+        aug[[col, pivot]] = aug[[pivot, col]]
+        aug[col] /= aug[col, col]
+        for r in range(n):
+            if r != col:
+                aug[r] -= aug[r, col] * aug[col]
+    return aug[:, n:]
 
 
 def apply(M, p):
     """p' = M · p  รับจุด 2 มิติ คืนจุด 2 มิติ (เติม 1 เป็น homogeneous ข้างใน)"""
-    raise NotImplementedError("TODO(A)")
+    return (M @ np.array([p[0], p[1], 1.0]))[:2]
 
 
 #
