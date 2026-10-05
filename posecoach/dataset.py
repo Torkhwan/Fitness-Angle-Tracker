@@ -19,7 +19,26 @@ def load_dataset(paths):
     """อ่าน CSV → ตัดแถวซ้ำ → คืน ({ท่า: {label: เมทริกซ์ n×3}}, {ท่า: ตัวนับการ clean})
     แถวซ้ำ = พิกัด 66 ค่าเหมือนกันทุกตัว (เช่น กดบันทึกเฟรมเดียวกัน 2 ครั้ง)
     สมบูรณ์ = ข้อต่อที่ท่านั้นใช้มี visibility ≥ VIS_MIN ทุกจุด, ต้องตรวจ = มีบางจุดต่ำกว่า"""
-    raise NotImplementedError("TODO(C)")
+    groups, clean, seen = {}, {}, set()
+    for path in paths:
+        with open(path, encoding="utf-8") as f:
+            rd = csv.DictReader(f)
+            if "exercise" not in (rd.fieldnames or []):
+                sys.exit(f"{path} เป็นรูปแบบเก่า (ไม่มีคอลัมน์ exercise) เก็บข้อมูลใหม่ด้วย pose_coach.py")
+            for row in rd:
+                ex = row["exercise"]
+                c = clean.setdefault(ex, {"rows":0, "duplicate":0, "complete":0, "check":0})
+                c["rows"] += 1
+                key = tuple(row[f"{a}{i}"] for i in range(33) for a in ("x","y"))
+                if key in seen:
+                    c["duplicate"] += 1
+                    continue
+                seen.add(key)
+                vis = [float(row[f"v{LM[row['side']][k]}"]) for k in NEED[ex]]
+                c["complete" if min(vis) >= VIS_MIN else "check"] += 1
+                names = [n for n, *_ in EXERCISES[ex]["features"]]
+                groups.setdefault(ex,{}).setdefault(row["label"], []).append([float(row[n]) for n in names])
+    return {ex: {lab: np.array(r) for lab, r in labs.items()} for ex, labs in groups.items()}, clean
 
 
 def count_discarded(ex):
@@ -29,7 +48,7 @@ def count_discarded(ex):
         with open(CLEAN_LOG, encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 if row["exercise"] == ex and row["status"] != "ok":
-                    out[row["status"]] == out.get(row["status"],0) + 1
+                    out[row["status"]] = out.get(row["status"],0) + 1
     return out
 
 
