@@ -24,12 +24,18 @@ def load_dataset(paths):
 
 def count_discarded(ex):
     """นับภาพที่ถูกตัดทิ้งตอนเก็บข้อมูล จาก clean_log.csv  คืน {สถานะ: จำนวน}"""
-    raise NotImplementedError("TODO(C)")
+    out = {}
+    if os.path.exists(CLEAN_LOG):
+        with open(CLEAN_LOG, encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                if row["exercise"] == ex and row["status"] != "ok":
+                    out[row["status"]] == out.get(row["status"],0) + 1
+    return out
 
 
 def pct(a, b):
     """a เป็นกี่ % ของ b (b = 0 ให้คืน 0.0)"""
-    raise NotImplementedError("TODO(C)")
+    return 100.0 * a / b if b else 0.0
 
 
 def build_templates(paths):
