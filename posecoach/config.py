@@ -12,21 +12,24 @@ MODEL_URL = ("https://storage.googleapis.com/mediapipe-models/pose_landmarker/"
 MODEL_PATH = os.path.join(HERE, "pose_landmarker_full.task")
 TEMPLATE_PATH = os.path.join(HERE, "templates.json")
 TOLERANCE = 10.0  # ต่างจากท่าถูกได้ไม่เกิน ± กี่องศา
-VIS_MIN = 0.5  # visibility ต่ำกว่าค่านี้นับว่าเห็นข้อต่อไม่ชัด
+VISIBILITY_MIN = 0.5  # visibility ต่ำกว่าค่านี้นับว่าเห็นข้อต่อไม่ชัด
 CLEAN_LOG = "clean_log.csv"  # บันทึกทุกภาพที่ป้อนตอนเก็บข้อมูล ว่าใช้ได้หรือตัดทิ้ง
-IMG_EXT = (".jpg", ".jpeg", ".png", ".bmp", ".webp")
+IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".bmp", ".webp")
 
-# ดัชนีข้อต่อของ MediaPipe Pose (33 จุด)
-# S ไหล่, E ศอก, W ข้อมือ, H สะโพก, K เข่า, A ข้อเท้า, HL ส้นเท้า, TO ปลายเท้า
-LM = {
-    "left":  {"S": 11, "E": 13, "W": 15, "H": 23, "K": 25, "A": 27, "HL": 29, "TO": 31},
-    "right": {"S": 12, "E": 14, "W": 16, "H": 24, "K": 26, "A": 28, "HL": 30, "TO": 32},
+# เลขดัชนีข้อต่อของ MediaPipe Pose (33 จุด) แยกข้างซ้ายและข้างขวา
+LANDMARK_INDEX = {
+    "left":  {"shoulder_point": 11, "elbow_point": 13, "wrist_point": 15, "hip_point": 23,
+              "knee_point": 25, "ankle_point": 27, "heel_point": 29, "toe_point": 31},
+    "right": {"shoulder_point": 12, "elbow_point": 14, "wrist_point": 16, "hip_point": 24,
+              "knee_point": 26, "ankle_point": 28, "heel_point": 30, "toe_point": 32},
 }
 
 # ข้อต่อที่แต่ละท่าต้องเห็น
-NEED = {"squat": ["S", "H", "K", "A", "HL", "TO"],
-        "pushup": ["S", "E", "W", "H", "K", "A", "TO"],
-        "lunge": ["S", "H", "K", "A"]}
+REQUIRED_POINTS = {
+    "squat": ["shoulder_point", "hip_point", "knee_point", "ankle_point", "heel_point", "toe_point"],
+    "pushup": ["shoulder_point", "elbow_point", "wrist_point", "hip_point", "knee_point", "ankle_point", "toe_point"],
+    "lunge": ["shoulder_point", "hip_point", "knee_point", "ankle_point"],
+}
 
 # สถานะของภาพที่ใช้ไม่ได้ → ข้อความที่พิมพ์
 SKIP_REASON = {"unreadable": "เปิดไฟล์ภาพไม่ได้", "no_person": "ไม่พบคนในภาพ",
@@ -35,7 +38,10 @@ SKIP_REASON = {"unreadable": "เปิดไฟล์ภาพไม่ได�
 
 #
 # ตั้งค่าแต่ละท่า
-#   features : (ชื่อ, ชื่อไทย, ข้อความเมื่อ "มากกว่า" ท่าถูก, ข้อความเมื่อ "น้อยกว่า" ท่าถูก)
+#   thai_name: ชื่อท่าภาษาไทย
+#   angles   : มุม 3 ค่าที่วัดจากท่านั้น
+#              (ชื่อ, ชื่อไทย, ข้อความเมื่อ "มากกว่า" ท่าถูก, ข้อความเมื่อ "น้อยกว่า" ท่าถูก)
+#              {difference} ในข้อความ = จำนวนองศาที่ต่างจากท่าถูก
 #   templates: ค่าสมมติ จะถูกแทนด้วยค่าเฉลี่ยจากข้อมูลจริงผ่าน --build-templates
 #   labels   : ชื่อ label → ข้อความไทย
 #   gate     : ประเมินท่าเฉพาะตอนที่อยู่ในช่วงลงท่า (ใช้กับกล้อง)
@@ -43,43 +49,49 @@ SKIP_REASON = {"unreadable": "เปิดไฟล์ภาพไม่ได�
 #
 EXERCISES = {
     "squat": {
-        "th": "สควอต",
-        "features": [
-            ("knee", "มุมเข่า", "ย่อเข่ายังไม่พอ {d:.0f}° → ย่อลงให้ต้นขาขนานพื้น", "ย่อลึกกว่าท่าต้นแบบ {d:.0f}°"),
+        "thai_name": "สควอต",
+        "angles": [
+            ("knee", "มุมเข่า", "ย่อเข่ายังไม่พอ {difference:.0f}° → ย่อลงให้ต้นขาขนานพื้น",
+             "ย่อลึกกว่าท่าต้นแบบ {difference:.0f}°"),
             ("hip", "มุมสะโพก", "", ""),
-            ("lean", "มุมโน้มตัว", "ลำตัวโน้มไปข้างหน้ามากเกินไป {d:.0f}° → ยืดอก ดันสะโพกไปด้านหลัง",
-             "ลำตัวตั้งตรงเกินไป {d:.0f}° → โน้มตัวไปข้างหน้าเล็กน้อย"),
+            ("lean", "มุมโน้มตัว", "ลำตัวโน้มไปข้างหน้ามากเกินไป {difference:.0f}° → ยืดอก ดันสะโพกไปด้านหลัง",
+             "ลำตัวตั้งตรงเกินไป {difference:.0f}° → โน้มตัวไปข้างหน้าเล็กน้อย"),
         ],
         "templates": {"correct": [65, 55, 35], "lean_forward": [65, 35, 55], "shallow": [120, 110, 20]},
         "labels": {"correct": "ท่าถูกต้อง", "lean_forward": "หลังโน้มไปข้างหน้ามากเกินไป", "shallow": "ย่อไม่พอ"},
-        "gate": lambda x: x[0] < 130,
-        "lines": [("S", "H"), ("H", "K"), ("K", "A"), ("A", "HL"), ("HL", "TO"), ("A", "TO")],
+        "gate": lambda angle_values: angle_values[0] < 130,
+        "lines": [("shoulder_point", "hip_point"), ("hip_point", "knee_point"), ("knee_point", "ankle_point"),
+                  ("ankle_point", "heel_point"), ("heel_point", "toe_point"), ("ankle_point", "toe_point")],
     },
     "pushup": {
-        "th": "วิดพื้น",
-        "features": [
-            ("elbow", "มุมศอก", "งอศอกไม่พอ {d:.0f}° → ลดตัวลงให้ต่ำกว่านี้", "ลงต่ำกว่าท่าต้นแบบ {d:.0f}°"),
-            ("hip_dev", "สะโพกเบี่ยงจากแนวลำตัว", "สะโพกโด่งขึ้น {d:.0f}° → ลดสะโพกให้ลำตัวเป็นเส้นตรง",
-             "สะโพกตก {d:.0f}° → เกร็งหน้าท้อง ยกสะโพกให้ลำตัวเป็นเส้นตรง"),
+        "thai_name": "วิดพื้น",
+        "angles": [
+            ("elbow", "มุมศอก", "งอศอกไม่พอ {difference:.0f}° → ลดตัวลงให้ต่ำกว่านี้",
+             "ลงต่ำกว่าท่าต้นแบบ {difference:.0f}°"),
+            ("hip_deviation", "สะโพกเบี่ยงจากแนวลำตัว", "สะโพกโด่งขึ้น {difference:.0f}° → ลดสะโพกให้ลำตัวเป็นเส้นตรง",
+             "สะโพกตก {difference:.0f}° → เกร็งหน้าท้อง ยกสะโพกให้ลำตัวเป็นเส้นตรง"),
             ("tilt", "มุมลำตัวกับพื้น", "", ""),
         ],
         "templates": {"correct": [90, 0, 5], "shallow": [130, 0, 20], "hip_sag": [90, -20, 5]},
         "labels": {"correct": "ท่าถูกต้อง", "shallow": "งอศอกไม่พอ", "hip_sag": "สะโพกตก"},
-        "gate": lambda x: x[0] < 150,
-        "lines": [("S", "E"), ("E", "W"), ("S", "H"), ("H", "K"), ("K", "A"), ("A", "TO")],
+        "gate": lambda angle_values: angle_values[0] < 150,
+        "lines": [("shoulder_point", "elbow_point"), ("elbow_point", "wrist_point"), ("shoulder_point", "hip_point"),
+                  ("hip_point", "knee_point"), ("knee_point", "ankle_point"), ("ankle_point", "toe_point")],
     },
     "lunge": {
-        "th": "ลันจ์",
-        "features": [
-            ("front_knee", "มุมเข่าหน้า", "ย่อยังไม่พอ {d:.0f}° → ลดตัวลงให้เข่าหน้าตั้งฉาก", ""),
-            ("shin", "มุมหน้าแข้งหน้า", "เข่าหน้าล้ำปลายเท้า {d:.0f}° → ก้าวเท้ายาวขึ้น ให้เข่าอยู่เหนือข้อเท้า",
-             ""),
-            ("lean", "มุมโน้มตัว", "ลำตัวโน้มไปข้างหน้า {d:.0f}° → ยืดตัวตรง", ""),
+        "thai_name": "ลันจ์",
+        "angles": [
+            ("front_knee", "มุมเข่าหน้า", "ย่อยังไม่พอ {difference:.0f}° → ลดตัวลงให้เข่าหน้าตั้งฉาก", ""),
+            ("shin", "มุมหน้าแข้งหน้า",
+             "เข่าหน้าล้ำปลายเท้า {difference:.0f}° → ก้าวเท้ายาวขึ้น ให้เข่าอยู่เหนือข้อเท้า", ""),
+            ("lean", "มุมโน้มตัว", "ลำตัวโน้มไปข้างหน้า {difference:.0f}° → ยืดตัวตรง", ""),
         ],
         "templates": {"correct": [90, 10, 5], "knee_over_toe": [80, 35, 5], "torso_lean": [95, 10, 30]},
         "labels": {"correct": "ท่าถูกต้อง", "knee_over_toe": "เข่าล้ำปลายเท้า", "torso_lean": "ลำตัวโน้ม/เอียง"},
-        "gate": lambda x: x[0] < 140,
-        "lines": [("S", "H"), ("H", "Kf"), ("Kf", "Af"), ("Af", "HLf"), ("HLf", "TOf"),
-                  ("H", "Kb"), ("Kb", "Ab"), ("Ab", "TOb")],
+        "gate": lambda angle_values: angle_values[0] < 140,
+        "lines": [("shoulder_point", "hip_point"), ("hip_point", "front_knee_point"),
+                  ("front_knee_point", "front_ankle_point"), ("front_ankle_point", "front_heel_point"),
+                  ("front_heel_point", "front_toe_point"), ("hip_point", "back_knee_point"),
+                  ("back_knee_point", "back_ankle_point"), ("back_ankle_point", "back_toe_point")],
     },
 }

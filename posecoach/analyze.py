@@ -9,24 +9,24 @@ import os
 
 import numpy as np
 
+from angles import compute_angles, ghost_segments
 from config import EXERCISES, TEMPLATE_PATH, TOLERANCE
-from features import compute_features, ghost_segments
-from matrix import apply, gauss_jordan_inverse, normalization_matrix, print_explain, reflect_y
+from matrix import apply, build_normalization_matrix, gauss_jordan_inverse, print_explain, reflect_y
 from vector import cosine, euclidean, manhattan
 
 
-def load_templates(ex):
+def load_templates(exercise):
     """คืน (templates, from_file)
-    มี templates.json และมีท่า ex → ใช้ค่าจากไฟล์, from_file = True
-    ไม่มี → ใช้ค่าสมมติใน EXERCISES[ex]["templates"], from_file = False"""
+    มี templates.json และมีท่า exercise → ใช้ค่าจากไฟล์, from_file = True
+    ไม่มี → ใช้ค่าสมมติใน EXERCISES[exercise]["templates"], from_file = False"""
     raise NotImplementedError("TODO(C)")
 
 
-def analyze(ex, pts_img, explain=False, templates=None):
-    """พิกัดภาพ → result dict r  (key ทั้งหมดดู docs/shared_structure.md)"""
+def analyze(exercise, image_points, explain=False, templates=None):
+    """พิกัดภาพ → result  (key ทั้งหมดดู docs/shared_structure.md)"""
     raise NotImplementedError("TODO(C)")
 
 
-def print_result(r):
-    """พิมพ์ features, label ที่ใกล้ที่สุด, ผ่าน/ไม่ผ่านของแต่ละมุม, คำแนะนำ"""
+def print_result(result):
+    """พิมพ์มุมที่วัดได้, label ที่ใกล้ที่สุด, ผ่าน/ไม่ผ่านของแต่ละมุม, คำแนะนำ"""
     raise NotImplementedError("TODO(C)")
