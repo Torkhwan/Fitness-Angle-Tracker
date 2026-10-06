@@ -15,7 +15,7 @@ import numpy as np
 
 from analyze import analyze, print_result
 from config import CLEAN_LOG, EXERCISES, IMG_EXT, LM, MODEL_PATH, MODEL_URL, NEED, SKIP_REASON, VIS_MIN
-from features import prepare_points
+from angles import prepare_points
 
 
 def make_landmarker(video=False):

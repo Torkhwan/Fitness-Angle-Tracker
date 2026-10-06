@@ -1,6 +1,6 @@
 # งาน B: เวกเตอร์
 
-ไฟล์: `posecoach/vector.py`, `posecoach/features.py` | ส่งภายใน **6 ต.ค. 69** | ทฤษฎี: บท 1, 2
+ไฟล์: `posecoach/vector.py`, `posecoach/angles.py` | ส่งภายใน **6 ต.ค. 69** | ทฤษฎี: บท 1, 2
 
 อ่าน [shared_structure.md](shared_structure.md) ข้อ 1-4 ก่อน
 
@@ -46,7 +46,7 @@ comp คือความยาวของ v ในแนวตั้ง, perp
 python check.py vector
 ```
 
-## ส่วนที่ 2: `features.py`
+## ส่วนที่ 2: `angles.py`
 
 ### `prepare_points(ex, pts)`
 
@@ -122,13 +122,13 @@ lean: t = (0.8, 0.6), comp_ĵ t = 0.6, |t| = 1                           cos = 0
 ทดสอบ
 
 ```bash
-python check.py features
+python check.py angles
 ```
 
 ## เสร็จเมื่อ
 
 - [ ] `python check.py vector` ผ่าน 10/10
-- [ ] `python check.py features` ผ่าน 10/10
+- [ ] `python check.py angles` ผ่าน 10/10
 - [ ] เปิด pull request และ merge เข้า `main`
 
 ## คำถามที่อาจารย์อาจถาม (เตรียมตอบ)

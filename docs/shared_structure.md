@@ -134,9 +134,9 @@ pts_img ──Fy──► P ──M──► Q ──► features x
 
 ```
 config.py   ← ทุกไฟล์
-vector.py   ← matrix.py, features.py, analyze.py, dataset.py
+vector.py   ← matrix.py, angles.py, analyze.py, dataset.py
 matrix.py   ← analyze.py
-features.py ← analyze.py, capture.py
+angles.py ← analyze.py, capture.py
 analyze.py  ← capture.py
 capture.py, dataset.py ← pose_coach.py
 ```

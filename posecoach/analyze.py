@@ -10,7 +10,7 @@ import os
 import numpy as np
 
 from config import EXERCISES, TEMPLATE_PATH, TOLERANCE
-from features import compute_features, ghost_segments
+from angles import compute_features, ghost_segments
 from matrix import apply, gauss_jordan_inverse, normalization_matrix, print_explain, reflect_y
 from vector import cosine, euclidean, manhattan
 

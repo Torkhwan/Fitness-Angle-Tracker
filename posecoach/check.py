@@ -4,7 +4,7 @@ check.py  ทดสอบงานของตัวเองทีละส่�
   python check.py vector      งาน B  ไม่ต้องรอใคร
   python check.py matrix      งาน A  ไม่ต้องรอใคร*
   python check.py normalize   งาน A  ต้องมี vector.norm ของงาน B
-  python check.py features    งาน B  ไม่ต้องรอใคร
+  python check.py angles      งาน B  ไม่ต้องรอใคร
 
 * matrix.py import norm จาก vector.py แต่ชุด matrix ไม่ได้เรียกใช้ จึงรันได้แม้งาน B ยังไม่เสร็จ
 """
@@ -82,7 +82,7 @@ def check_normalize():
 
 
 def check_features():
-    import features as f
+    import angles as f
     Q = {"S": A(0.8, 0.6), "H": A(0, 0), "K": A(0.8, 0), "A": A(0.4, -0.8), "HL": A(0.2, -1.0), "TO": A(0.8, -1.0)}
     x, extra = f.compute_features("squat", Q)
     check("squat = [63.43, 36.87, 53.13]", np.allclose(x, [63.4349, 36.8699, 53.1301], atol=1e-3))
@@ -110,7 +110,7 @@ def check_features():
 
 
 if __name__ == "__main__":
-    sets = {"vector": check_vector, "matrix": check_matrix, "normalize": check_normalize, "features": check_features}
+    sets = {"vector": check_vector, "matrix": check_matrix, "normalize": check_normalize, "angles": check_features}
     if len(sys.argv) != 2 or sys.argv[1] not in sets:
         sys.exit("ใช้: python check.py " + " | ".join(sets))
     try:

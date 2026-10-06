@@ -1,8 +1,8 @@
 """
-features.py  งาน B: เตรียมจุด → features ของแต่ละท่า → เส้นท่าที่ถูก
+angles.py  งาน B: เตรียมจุด → features ของแต่ละท่า → เส้นท่าที่ถูก
 
 คำอธิบายงานและสูตร: docs/role_B_vector.md
-ทดสอบ: python check.py features
+ทดสอบ: python check.py angles
 """
 import math
 

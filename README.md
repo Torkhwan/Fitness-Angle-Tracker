@@ -25,7 +25,7 @@ branch ของแต่ละคน: `Praw` `Tonlew` `tonkla` `Jennie`
 | งาน | ไฟล์ที่รับผิดชอบ | ทำอะไร | ส่งภายใน | ผู้รับผิดชอบ | branch |
 |---|---|---|---|---|---|
 | **A เมทริกซ์** | `matrix.py` | เมทริกซ์การแปลง, det, Gauss-Jordan inverse, เมทริกซ์ normalize, พิมพ์ขั้นตอนคำนวณ | **7 ต.ค. 69** | | |
-| **B เวกเตอร์** | `vector.py` `features.py` | dot / projection / cross / ระยะทาง, คำนวณมุมของแต่ละท่า, เส้นท่าที่ถูก | **6 ต.ค. 69** | | |
+| **B เวกเตอร์** | `vector.py` `angles.py` | dot / projection / cross / ระยะทาง, คำนวณมุมของแต่ละท่า, เส้นท่าที่ถูก | **6 ต.ค. 69** | | |
 | **C วิเคราะห์ผล** | `analyze.py` `dataset.py` | เทียบท่าต้นแบบ + คำแนะนำ, clean ข้อมูล + สถิติ, สร้างท่าต้นแบบ, วัดความแม่นยำ | `analyze.py` **8 ต.ค. 69** / `dataset.py` **11 ต.ค. 69** | | |
 | **D รับภาพและแสดงผล** | `capture.py` `pose_coach.py` | ดึงพิกัดจาก MediaPipe, บันทึก CSV, วาดผลลงภาพ, กล้อง, คำสั่งทั้งหมดของโปรแกรม | **9 ต.ค. 69** | | |
 
@@ -65,7 +65,7 @@ branch ของแต่ละคน: `Praw` `Tonlew` `tonkla` `Jennie`
 posecoach/
   config.py       ค่าคงที่ที่ใช้ร่วมกัน      เสร็จแล้ว ห้ามแก้โดยไม่แจ้งกลุ่ม
   vector.py       งาน B
-  features.py     งาน B
+  angles.py     งาน B
   matrix.py       งาน A
   analyze.py      งาน C
   dataset.py      งาน C
@@ -102,7 +102,7 @@ cd posecoach
 | งาน | คำสั่ง | ต้องรอใคร |
 |---|---|---|
 | B | `python check.py vector` | ไม่ต้องรอ |
-| B | `python check.py features` | ไม่ต้องรอ (เขียน `vector.py` ของตัวเองให้เสร็จก่อน) |
+| B | `python check.py angles` | ไม่ต้องรอ (เขียน `vector.py` ของตัวเองให้เสร็จก่อน) |
 | A | `python check.py matrix` | ไม่ต้องรอ |
 | A | `python check.py normalize` | งาน B merge แล้ว |
 | C | `python selftest.py` | งาน A และ B merge แล้ว |
@@ -197,7 +197,7 @@ commit บ่อย ๆ ทีละ 1-3 ฟังก์ชัน ไม่ต�
 7. หน้าเว็บจะมีปุ่ม Delete branch **ไม่ต้องกด** เพราะยังต้องใช้ branch เดิมทำงานต่อ
 8. แจ้งในกลุ่มว่า merge แล้ว ทุกคนทำข้อ 6.2 เพื่อรับงานใหม่
 
-ส่งได้หลายรอบ เช่น งาน B ส่ง `vector.py` ก่อน แล้วค่อยส่ง `features.py`
+ส่งได้หลายรอบ เช่น งาน B ส่ง `vector.py` ก่อน แล้วค่อยส่ง `angles.py`
 
 ### 6.5 ถ้าเกิดปัญหา
 

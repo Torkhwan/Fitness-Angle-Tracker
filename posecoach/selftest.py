@@ -12,7 +12,7 @@ import numpy as np
 
 from analyze import analyze, print_result
 from config import EXERCISES
-from features import prepare_points
+from angles import prepare_points
 from matrix import apply, det3, gauss_jordan_inverse, reflect_x, reflect_y, rotation, scaling, translation
 
 
