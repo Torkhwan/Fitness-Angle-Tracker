@@ -14,45 +14,47 @@ import urllib.request
 import numpy as np
 
 from analyze import analyze, print_result
-from config import CLEAN_LOG, EXERCISES, IMG_EXT, LM, MODEL_PATH, MODEL_URL, NEED, SKIP_REASON, VIS_MIN
 from angles import prepare_points
+from config import (CLEAN_LOG, EXERCISES, IMAGE_EXTENSIONS, LANDMARK_INDEX, MODEL_PATH, MODEL_URL,
+                    REQUIRED_POINTS, SKIP_REASON, VISIBILITY_MIN)
 
 
 def make_landmarker(video=False):
-    """ดาวน์โหลดโมเดลถ้ายังไม่มี แล้วคืน (mp, landmarker)"""
+    """ดาวน์โหลดโมเดลถ้ายังไม่มี แล้วคืน (mediapipe, landmarker)"""
     raise NotImplementedError("TODO(D)")
 
 
-def extract(ex, result, w, h):
-    """คืน (ข้าง, จุด, landmarks ทั้ง 33, สถานะ) สถานะ = ok / no_person / low_visibility"""
+def extract(exercise, detection, width, height):
+    """detection = ผลตรวจจับของ MediaPipe, width/height = ขนาดภาพ
+    คืน (side, points, landmarks ทั้ง 33, status)  status = ok / no_person / low_visibility"""
     raise NotImplementedError("TODO(D)")
 
 
-def save_row(path, ex, label, side, x, lm):
+def save_row(path, exercise, label, side, angle_values, landmarks):
     """ต่อท้าย 1 แถวใน CSV (สร้างหัวตารางถ้าเป็นไฟล์ใหม่) คอลัมน์ดู docs/shared_structure.md"""
     raise NotImplementedError("TODO(D)")
 
 
-def log_clean(ex, label, path, status):
+def log_clean(exercise, label, path, status):
     """บันทึกว่าภาพนี้ใช้ได้ (ok) หรือถูกตัดทิ้งเพราะอะไร → ใช้ทำสถิติการ clean ข้อมูล"""
     raise NotImplementedError("TODO(D)")
 
 
-def draw(img, pts, r):
+def draw(image, points, result):
     """วาดโครงร่าง (เขียว = correct, แดง = อื่น), เส้นท่าที่ถูก (เหลือง) และข้อความผล"""
     raise NotImplementedError("TODO(D)")
 
 
-def run_image(ex, path, explain, label, save, mp_lmk=None, out_dir=None):
+def run_image(exercise, path, explain, label, save, landmarker_pair=None, output_folder=None):
     """ตรวจภาพ 1 ภาพ คืนสถานะ ok / unreadable / no_person / low_visibility / calc_error"""
     raise NotImplementedError("TODO(D)")
 
 
-def run_folder(ex, folder, explain, label, save):
+def run_folder(exercise, folder, explain, label, save):
     """ตรวจทุกภาพในโฟลเดอร์ (ไม่เข้าโฟลเดอร์ย่อย) รูปผลลัพธ์เก็บใน <โฟลเดอร์>/results"""
     raise NotImplementedError("TODO(D)")
 
 
-def run_camera(ex, cam, save):
+def run_camera(exercise, camera_index, save):
     """เปิดกล้อง ตรวจทุกเฟรม ปุ่ม 1/2/3 = บันทึกข้อมูล, e = อธิบาย, q = ออก"""
     raise NotImplementedError("TODO(D)")

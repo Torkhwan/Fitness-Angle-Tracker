@@ -25,6 +25,7 @@ from selftest import selftest
 
 
 def main():
+    """อ่านตัวเลือกจากคำสั่ง แล้วเรียกฟังก์ชันที่ตรงกับคำสั่งนั้น"""
     raise NotImplementedError("TODO(D)")
 
 

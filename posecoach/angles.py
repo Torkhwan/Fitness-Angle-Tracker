@@ -1,5 +1,5 @@
 """
-angles.py  งาน B: เตรียมจุด → features ของแต่ละท่า → เส้นท่าที่ถูก
+angles.py  งาน B: เตรียมจุด → มุมของแต่ละท่า → เส้นท่าที่ถูก
 
 คำอธิบายงานและสูตร: docs/role_B_vector.md
 ทดสอบ: python check.py angles
@@ -8,127 +8,137 @@ import math
 
 import numpy as np
 
-from vector import J, angle_at, angle_between, cross_z, norm, projection, signed_from_vertical
+from vector import angle_at, angle_between, cross_z, norm, projection, signed_from_vertical, vertical_unit_vector
 
 
-def prepare_points(ex, pts):
+def prepare_points(exercise, points):
     """ท่า lunge: แยกขาหน้า/ขาหลัง (ขาหน้า = ข้อเท้าที่อยู่ไปทางทิศที่ปลายเท้าชี้)
-        ท่าอื่นคืน pts เดิม"""
-    if ex != 'lunge':
-        return pts
+        ท่าอื่นคืน points เดิม"""
+    if exercise != 'lunge':
+        return points
 
-    facing = (pts['TO_L'] - pts['HL_L']) + (pts['TO_R'] - pts['HL_R'])
+    facing = ((points['left_toe_point'] - points['left_heel_point'])
+              + (points['right_toe_point'] - points['right_heel_point']))
 
-    s = 1.0 if facing[0] >= 0 else -1.0
+    direction_sign = 1.0 if facing[0] >= 0 else -1.0
 
-    if s * pts['A_L'][0] >= s * pts['A_R'][0]:
-        front, back = 'L', 'R'
+    if direction_sign * points['left_ankle_point'][0] >= direction_sign * points['right_ankle_point'][0]:
+        front_side, back_side = 'left', 'right'
     else:
-        front, back = 'R', 'L'
+        front_side, back_side = 'right', 'left'
 
     return {
-        'S': pts['S'],
-        'H': pts['H'],
-        'Kf': pts[f'K_{front}'],
-        'Af': pts[f'A_{front}'],
-        'HLf': pts[f'HL_{front}'],
-        'TOf': pts[f'TO_{front}'],
-        'Kb': pts[f'K_{back}'],
-        'Ab': pts[f'A_{back}'],
-        'HLb': pts[f'HL_{back}'],
-        'TOb': pts[f'TO_{back}']
+        'shoulder_point': points['shoulder_point'],
+        'hip_point': points['hip_point'],
+        'front_knee_point': points[f'{front_side}_knee_point'],
+        'front_ankle_point': points[f'{front_side}_ankle_point'],
+        'front_heel_point': points[f'{front_side}_heel_point'],
+        'front_toe_point': points[f'{front_side}_toe_point'],
+        'back_knee_point': points[f'{back_side}_knee_point'],
+        'back_ankle_point': points[f'{back_side}_ankle_point'],
+        'back_heel_point': points[f'{back_side}_heel_point'],
+        'back_toe_point': points[f'{back_side}_toe_point']
     }
 
 
-def compute_features(ex, Q):
-    """Q = จุดหลัง normalize (หันไปทาง +x, y ชี้ขึ้น, สะโพกที่ 0, ลำตัวยาว 1)
-        คืน (x, extra)  x = np.array 3 ค่า เรียงตาม EXERCISES[ex]["features"], extra = dict ค่าประกอบ"""
-    if ex == 'squat':
-        K, H, A, S = Q['K'], Q['H'], Q['A'], Q['S']
-        TO = Q['TO'] if 'TO' in Q else Q.get('TO_L', np.array([0.0, 0.0]))
+def compute_angles(exercise, normalized_points):
+    """normalized_points = จุดหลัง normalize (หันไปทาง +x, y ชี้ขึ้น, สะโพกที่ 0, ลำตัวยาว 1)
+        คืน (angle_values, extra)  angle_values = np.array 3 ค่า เรียงตาม EXERCISES[exercise]["angles"],
+        extra = dict ค่าประกอบ"""
+    if exercise == 'squat':
+        knee_point, hip_point = normalized_points['knee_point'], normalized_points['hip_point']
+        ankle_point, shoulder_point = normalized_points['ankle_point'], normalized_points['shoulder_point']
+        toe_point = (normalized_points['toe_point'] if 'toe_point' in normalized_points
+                     else normalized_points.get('left_toe_point', np.array([0.0, 0.0])))
 
-        knee = angle_at(K, H, A)
-        hip = angle_at(H, S, K)
+        knee = angle_at(knee_point, hip_point, ankle_point)
+        hip = angle_at(hip_point, shoulder_point, knee_point)
 
-        t = S - H
-        comp, proj, perp = projection(t, J)
-        lean = math.degrees(math.acos(max(-1.0, min(1.0, comp / norm(t)))))
+        torso_vector = shoulder_point - hip_point
+        component, projected, perpendicular = projection(torso_vector, vertical_unit_vector)
+        lean = math.degrees(math.acos(max(-1.0, min(1.0, component / norm(torso_vector)))))
 
-        features = np.array([knee, hip, lean])
+        angle_values = np.array([knee, hip, lean])
         extra = {
-            "torso t": t,
-            "comp_ĵ t": comp,
-            "proj_ĵ t": proj,
-            "ส่วนตั้งฉาก": perp,
-            "เข่าเลยปลายเท้า (เท่าลำตัว)": float(K[0] - TO[0])
+            "torso_vector": torso_vector,
+            "component บน ĵ": component,
+            "projection บน ĵ": projected,
+            "ส่วนตั้งฉาก": perpendicular,
+            "เข่าเลยปลายเท้า (เท่าลำตัว)": float(knee_point[0] - toe_point[0])
         }
 
-    elif ex == 'pushup':
-        E, S, W, H, A = Q['E'], Q['S'], Q['W'], Q['H'], Q['A']
+    elif exercise == 'pushup':
+        elbow_point, shoulder_point = normalized_points['elbow_point'], normalized_points['shoulder_point']
+        wrist_point, hip_point = normalized_points['wrist_point'], normalized_points['hip_point']
+        ankle_point = normalized_points['ankle_point']
 
-        elbow = angle_at(E, S, W)
-        body = angle_at(H, S, A)
-        line = S - A
-        cz = cross_z(line, H - A)
-        hip_dev = (180.0 - body) * (1.0 if cz >= 0 else -1.0)
-        tilt = angle_between(line, np.array([1.0, 0.0]))
+        elbow = angle_at(elbow_point, shoulder_point, wrist_point)
+        body_angle = angle_at(hip_point, shoulder_point, ankle_point)
+        body_line = shoulder_point - ankle_point
+        cross_value = cross_z(body_line, hip_point - ankle_point)
+        hip_deviation = (180.0 - body_angle) * (1.0 if cross_value >= 0 else -1.0)
+        tilt = angle_between(body_line, np.array([1.0, 0.0]))
 
-        _, _, perp = projection(H - A, line)
+        _, _, perpendicular = projection(hip_point - ankle_point, body_line)
 
-        features = np.array([elbow, hip_dev, tilt])
+        angle_values = np.array([elbow, hip_deviation, tilt])
         extra = {
-            "มุมลำตัวที่สะโพก": body,
-            "cross z": cz,
-            "ระยะสะโพกจากเส้น ไหล่-ข้อเท้า": perp
+            "มุมลำตัวที่สะโพก": body_angle,
+            "cross product (z)": cross_value,
+            "ระยะสะโพกจากเส้น ไหล่-ข้อเท้า": perpendicular
         }
 
-    elif ex == 'lunge':
-        Kf, H, Af = Q['Kf'], Q['H'], Q['Af']
-        Kb, Ab = Q['Kb'], Q['Ab']
-        S, TOf = Q['S'], Q['TOf']
+    elif exercise == 'lunge':
+        front_knee_point, hip_point = normalized_points['front_knee_point'], normalized_points['hip_point']
+        front_ankle_point = normalized_points['front_ankle_point']
+        back_knee_point, back_ankle_point = normalized_points['back_knee_point'], normalized_points['back_ankle_point']
+        shoulder_point, front_toe_point = normalized_points['shoulder_point'], normalized_points['front_toe_point']
 
-        front_knee = angle_at(Kf, H, Af)
-        shin = signed_from_vertical(Kf - Af)
-        lean = abs(signed_from_vertical(S - H))
+        front_knee = angle_at(front_knee_point, hip_point, front_ankle_point)
+        shin = signed_from_vertical(front_knee_point - front_ankle_point)
+        lean = abs(signed_from_vertical(shoulder_point - hip_point))
 
-        features = np.array([front_knee, shin, lean])
+        angle_values = np.array([front_knee, shin, lean])
         extra = {
-            "มุมเข่าหลัง": angle_at(Kb, H, Ab),
-            "เข่าหน้าเลยปลายเท้า (เท่าลำตัว)": float(Kf[0] - TOf[0])
+            "มุมเข่าหลัง": angle_at(back_knee_point, hip_point, back_ankle_point),
+            "เข่าหน้าเลยปลายเท้า (เท่าลำตัว)": float(front_knee_point[0] - front_toe_point[0])
         }
 
-    return features, extra
+    return angle_values, extra
 
 
-def ghost_segments(ex, Q, ref):
-    """ท่าที่ถูก (พิกัดมาตรฐาน) สำหรับวาดทับ จะถูกแปลงกลับด้วย M⁻¹ ใน analyze
-        ref = features ของท่าต้นแบบ correct, คืน list ของ (จุดเริ่ม, จุดปลาย)"""
+def ghost_segments(exercise, normalized_points, correct_template):
+    """ท่าที่ถูก (พิกัดมาตรฐาน) สำหรับวาดทับ จะถูกแปลงกลับด้วย inverse_matrix ใน analyze
+        correct_template = มุม 3 ค่าของท่าต้นแบบ correct, คืน list ของ (จุดเริ่ม, จุดปลาย)"""
     segments = []
 
-    if ex == 'squat':
-        H = Q['H']
-        a = math.radians(ref[2])
-        dir_torso = np.array([math.sin(a), math.cos(a)])
-        segments.append((H, H + dir_torso))
+    if exercise == 'squat':
+        hip_point = normalized_points['hip_point']
+        lean_angle = math.radians(correct_template[2])
+        torso_direction = np.array([math.sin(lean_angle), math.cos(lean_angle)])
+        segments.append((hip_point, hip_point + torso_direction))
 
-    elif ex == 'pushup':
-        S, A, H = Q['S'], Q['A'], Q['H']
-        line = S - A
-        _, proj, _ = projection(H - A, line)
-        hg = A + proj
-        
-        segments.append((S, hg))
-        segments.append((hg, A))
+    elif exercise == 'pushup':
+        shoulder_point, ankle_point = normalized_points['shoulder_point'], normalized_points['ankle_point']
+        hip_point = normalized_points['hip_point']
+        body_line = shoulder_point - ankle_point
+        _, projected, _ = projection(hip_point - ankle_point, body_line)
+        correct_hip_point = ankle_point + projected
 
-    elif ex == 'lunge':
-        Af, Kf, H = Q['Af'], Q['Kf'], Q['H']
+        segments.append((shoulder_point, correct_hip_point))
+        segments.append((correct_hip_point, ankle_point))
 
-        a_shin = math.radians(ref[1])
-        dir_shin = norm(Kf - Af) * np.array([math.sin(a_shin), math.cos(a_shin)])
-        segments.append((Af, Af + dir_shin))
+    elif exercise == 'lunge':
+        front_ankle_point, front_knee_point = normalized_points['front_ankle_point'], normalized_points['front_knee_point']
+        hip_point = normalized_points['hip_point']
 
-        a_lean = math.radians(ref[2])
-        dir_lean = np.array([math.sin(a_lean), math.cos(a_lean)])
-        segments.append((H, H + dir_lean))
+        shin_angle = math.radians(correct_template[1])
+        correct_shin_vector = (norm(front_knee_point - front_ankle_point)
+                               * np.array([math.sin(shin_angle), math.cos(shin_angle)]))
+        segments.append((front_ankle_point, front_ankle_point + correct_shin_vector))
+
+        lean_angle = math.radians(correct_template[2])
+        lean_direction = np.array([math.sin(lean_angle), math.cos(lean_angle)])
+        segments.append((hip_point, hip_point + lean_direction))
 
     return segments

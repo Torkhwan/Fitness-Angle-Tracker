@@ -9,57 +9,59 @@ import math
 
 import numpy as np
 
-J = np.array([0.0, 1.0])
+# เวกเตอร์หนึ่งหน่วยแนวตั้ง ĵ = (0, 1) ใช้วัดว่าเวกเตอร์เอียงจากแนวตั้งกี่องศา
+vertical_unit_vector = np.array([0.0, 1.0])
 
 
-def norm(v):
-    """|v| จาก dot product (ห้ามใช้ np.linalg.norm)"""
-    return float(math.sqrt(np.dot(v,v)))
+def norm(vector):
+    """|vector| จาก dot product (ห้ามใช้ np.linalg.norm)"""
+    return float(math.sqrt(np.dot(vector,vector)))
 
 
-def angle_between(u, v):
-    """มุมระหว่าง u กับ v (องศา 0-180) จาก dot product"""
-    c=(np.dot(u,v))/(norm(u)*norm(v))
-    return float(math.degrees(math.acos(max(-1.0,min(1.0,(c))))))
+def angle_between(first_vector, second_vector):
+    """มุมระหว่างเวกเตอร์สองตัว (องศา 0-180) จาก dot product"""
+    cosine_value=(np.dot(first_vector,second_vector))/(norm(first_vector)*norm(second_vector))
+    return float(math.degrees(math.acos(max(-1.0,min(1.0,(cosine_value))))))
 
 
-def angle_at(center, p1, p2):
-    """มุมที่ข้อต่อ center ด้วย dot product (เวกเตอร์เริ่มจากข้อต่อเสมอ)"""
-    u=p1-center
-    v=p2-center
-    return angle_between(u,v)
+def angle_at(center_point, first_point, second_point):
+    """มุมที่ข้อต่อ center_point ด้วย dot product (เวกเตอร์เริ่มจากข้อต่อเสมอ)"""
+    first_vector=first_point-center_point
+    second_vector=second_point-center_point
+    return angle_between(first_vector,second_vector)
 
 
-def projection(t, b):
-    """คืน (comp_b t, proj_b t, ส่วนตั้งฉาก)"""
-    comp=np.dot(t,b)/norm(b)
-    proj=(np.dot(t,b)/np.dot(b,b))*b
-    perp=t-proj
-    return comp,proj,perp
+def projection(vector, base_vector):
+    """ฉาย vector ลงบน base_vector คืน (component, projected, perpendicular)
+    component = ความยาวของเงา (comp), projected = เวกเตอร์เงา (proj), perpendicular = ส่วนตั้งฉาก"""
+    component=np.dot(vector,base_vector)/norm(base_vector)
+    projected=(np.dot(vector,base_vector)/np.dot(base_vector,base_vector))*base_vector
+    perpendicular=vector-projected
+    return component,projected,perpendicular
 
 
-def cross_z(u, v):
-    """องค์ประกอบ z ของ u × v (เวกเตอร์ 2 มิติ)"""
-    return float((u[0]*v[1])-(u[1]*v[0]))
+def cross_z(first_vector, second_vector):
+    """องค์ประกอบ z ของ first_vector × second_vector (เวกเตอร์ 2 มิติ)"""
+    return float((first_vector[0]*second_vector[1])-(first_vector[1]*second_vector[0]))
 
 
-def euclidean(a, b):
-    return norm(a - b)
+def euclidean(first_vector, second_vector):
+    return norm(first_vector - second_vector)
 
 
-def manhattan(a, b):
-    return float(np.sum(np.abs(a - b)))
+def manhattan(first_vector, second_vector):
+    return float(np.sum(np.abs(first_vector - second_vector)))
 
 
-def cosine(a, b):
+def cosine(first_vector, second_vector):
     """cosine similarity"""
-    c=(np.dot(a,b))/(norm(a)*norm(b))
-    return float((max(-1.0, min(1.0, c))))
+    cosine_value=(np.dot(first_vector,second_vector))/(norm(first_vector)*norm(second_vector))
+    return float((max(-1.0, min(1.0, cosine_value))))
 
 
-def signed_from_vertical(v):
-    """มุมของ v จากแนวตั้ง (องศา) บวก = เอียงไปข้างหน้า (+x) ใช้ projection บน ĵ"""
-    comp, _, perp = projection(v, J)
-    c = comp / norm(v)
-    ang = math.degrees(math.acos(max(-1.0, min(1.0, c))))
-    return float(ang if perp[0] >= 0 else -ang)
+def signed_from_vertical(vector):
+    """มุมของ vector จากแนวตั้ง (องศา) บวก = เอียงไปข้างหน้า (+x) ใช้ projection บน ĵ"""
+    component, _, perpendicular = projection(vector, vertical_unit_vector)
+    cosine_value = component / norm(vector)
+    angle = math.degrees(math.acos(max(-1.0, min(1.0, cosine_value))))
+    return float(angle if perpendicular[0] >= 0 else -angle)
