@@ -121,10 +121,10 @@ def ghost_segments(ex, Q, ref):
         segments.append((hg, A))
 
     elif ex == 'lunge':
-        Af, H = Q['Af'], Q['H']
+        Af, Kf, H = Q['Af'], Q['Kf'], Q['H']
 
         a_shin = math.radians(ref[1])
-        dir_shin = np.array([math.sin(a_shin), math.cos(a_shin)])
+        dir_shin = norm(Kf - Af) * np.array([math.sin(a_shin), math.cos(a_shin)])
         segments.append((Af, Af + dir_shin))
 
         a_lean = math.radians(ref[2])
