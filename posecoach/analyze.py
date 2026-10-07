@@ -19,7 +19,12 @@ def load_templates(exercise):
     """คืน (templates, from_file)
     มี templates.json และมีท่า exercise → ใช้ค่าจากไฟล์, from_file = True
     ไม่มี → ใช้ค่าสมมติใน EXERCISES[exercise]["templates"], from_file = False"""
-    raise NotImplementedError("TODO(C)")
+    if os.path.exists(TEMPLATE_PATH):
+        with open(TEMPLATE_PATH, encoding="utf-8") as file:
+            saved_templates = json.load(file)
+        if exercise in saved_templates:
+            return {label: np.array(values, float) for label, values in saved_templates[exercise].items()}, True
+    return {label: np.array(values, float) for label, values in EXERCISES[exercise]["templates"].items()}, False
 
 
 def analyze(exercise, image_points, explain=False, templates=None):
