@@ -110,15 +110,15 @@ def evaluate(paths, test_ratio=0.2, seed=0):
             shuffled_indices = random_generator.permutation(len(angle_matrix))
             test_samples += [(label, angle_matrix[index]) for index in shuffled_indices[:test_count]]
             templates[label] = angle_matrix[shuffled_indices[test_count:]].mean(axis=0)
-            if not test_samples: 
-                print(f"[{exercise}] ข้อมูลน้อยเกินไป ต้องมีอย่างน้อย label ละ 2 แถว")
-                continue
+        if not test_samples: 
+            print(f"[{exercise}] ข้อมูลน้อยเกินไป ต้องมีอย่างน้อย label ละ 2 แถว")
+            continue
         labels = list(templates)
         confusion = np.zeros((len(labels), len(labels)), dtype=int)
         for label, angle_values in test_samples:
             predicted_label = min(templates, key=lambda name: euclidean(angle_values, templates[name]))
             confusion[labels.index(label), labels.index(predicted_label)] += 1
-            accuracy = percent(np.trace(confusion), confusion.sum())
+        accuracy = percent(np.trace(confusion), confusion.sum())
         print(f"\n----- {EXERCISES[exercise]['thai_name']} ({exercise}) -----")
         print(f"train {sum(len(angle_matrix) for angle_matrix in label_rows.values()) - len(test_samples)} แถว, "
               f"test {len(test_samples)} แถว")
