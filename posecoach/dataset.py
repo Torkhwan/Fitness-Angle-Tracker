@@ -62,8 +62,40 @@ def percent(part, whole):
 
 def build_templates(paths):
     """พิมพ์สถิติการ clean และสถิติแต่ละ label แล้วบันทึกค่าเฉลี่ยลง templates.json"""
-    raise NotImplementedError("TODO(C)")
-
+    groups, clean_counts = load_dataset(paths)
+    templates = {}
+    if os.path.exists(TEMPLATE_PATH):
+        with open(TEMPLATE_PATH, encoding="utf-8") as file:
+            templates = json.load(file)
+    for exercise, label_rows in groups.items():
+        counts, discarded = clean_counts[exercise], count_discarded(exercise)
+        discarded_count = sum(discarded.values())
+        count_before = counts["rows"] + discarded_count
+        dropped_count = discarded_count + counts["duplicate"]
+        print(f"\n----- {EXERCISES[exercise]['thai_name']} ({exercise}) -----")
+        print(f"การ clean: ก่อน {count_before} → หลัง {count_before - dropped_count}")
+        print(f"   สมบูรณ์            {counts['complete']:>4}  ({percent(counts['complete'], count_before):5.1f}%)")
+        print(f"   ต้องตรวจ/แก้ไข      {counts['check']:>4}  ({percent(counts['check'], count_before):5.1f}%)"
+              "  ← บางข้อต่อ visibility ต่ำ ให้เปิดรูปใน results/ ตรวจ label")
+        print(f"   ตัดทิ้ง             {dropped_count:>4}  ({percent(dropped_count, count_before):5.1f}%)"
+              f"  ← แถวซ้ำ {counts['duplicate']}"
+              + "".join(f", {SKIP_REASON[status]} {count}" for status, count in discarded.items()))
+        total = sum(len(angle_matrix) for angle_matrix in label_rows.values())
+        angle_names = [name for name, *_ in EXERCISES[exercise]["angles"]]
+        print(f"ข้อมูลแต่ละแบบ (มุม = {', '.join(angle_names)}):")
+        print(f"   {'label':<15}{'n':>4} {'%':>6}   {'mean':<22}{'std':<22}{'min':<22}max")
+        templates[exercise] = {}
+        for label, angle_matrix in label_rows.items():
+            # ท่าต้นแบบของ label = เวกเตอร์ค่าเฉลี่ยของมุมทุกแถว
+            templates[exercise][label] = angle_matrix.mean(axis=0).round(2).tolist()
+            format_row = lambda values: "[" + ", ".join(f"{value:6.1f}" for value in values) + "]"
+            print(f"   {label:<15}{len(angle_matrix):>4} {percent(len(angle_matrix), total):5.1f}%   "
+                  f"{format_row(angle_matrix.mean(0)):<22}{format_row(angle_matrix.std(0)):<22}"
+                  f"{format_row(angle_matrix.min(0)):<22}{format_row(angle_matrix.max(0))}")
+        print(f"   {'รวม':<15}{total:>4}")
+    with open(TEMPLATE_PATH, "w", encoding="utf-8") as file:
+        json.dump(templates, file, indent=2, ensure_ascii=False)
+    print("\nบันทึกท่าต้นแบบ:", TEMPLATE_PATH)
 
 def evaluate(paths, test_ratio=0.2, seed=0):
     """แบ่งข้อมูลแต่ละ label เป็น train/test → ท่าต้นแบบ = ค่าเฉลี่ยของ train
