@@ -18,12 +18,33 @@ from angles import prepare_points
 from config import (CLEAN_LOG, EXERCISES, IMAGE_EXTENSIONS, LANDMARK_INDEX, MODEL_PATH, MODEL_URL,
                     REQUIRED_POINTS, SKIP_REASON, VISIBILITY_MIN)
 
-
-def make_landmarker(video=False):
+def make_landmarker(video:bool = False) -> tuple: 
     """ดาวน์โหลดโมเดลถ้ายังไม่มี แล้วคืน (mediapipe, landmarker)"""
-    raise NotImplementedError("TODO(D)")
-
-
+    import mediapipe 
+    from mediapipe.tasks import python as mediapipe_python
+    from mediapipe.tasks.python import vision
+    
+    # check have model?
+    if not os.path.exists(MODEL_PATH):
+        print(f'กำลังดาวน์โหลดโมเดล {MODEL_URL} → {MODEL_PATH} ...')
+        # download model
+        urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+        
+    # select mode
+    mode = vision.RunningMode.VIDEO if video else vision.RunningMode.IMAGE
+    
+    # setting
+    options = vision.PoseLandmarkerOptions(
+        # where is the model file
+        base_options = mediapipe_python.BaseOptions(model_asset_path=MODEL_PATH),
+        # which mode to run 
+        running_mode = mode,
+        # focus one person only
+        num_poses = 1
+    )
+    
+    return mediapipe, vision.PoseLandmarker.create_from_options(options)
+        
 def extract(exercise, detection, width, height):
     """detection = ผลตรวจจับของ MediaPipe, width/height = ขนาดภาพ
     คืน (side, points, landmarks ทั้ง 33, status)  status = ok / no_person / low_visibility"""
