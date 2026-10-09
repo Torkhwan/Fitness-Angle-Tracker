@@ -285,8 +285,138 @@ def run_image(exercise: str, path: str, explain: bool, label: str | None, save: 
     
 def run_folder(exercise: str, folder: str, explain: bool, label: str | None, save: str | None) -> None:
     """ตรวจทุกภาพในโฟลเดอร์ (ไม่เข้าโฟลเดอร์ย่อย) รูปผลลัพธ์เก็บใน <โฟลเดอร์>/results"""
-    raise NotImplementedError("TODO(D)")
+    # serch image files in folder
+    image_files = sorted(
+                file_name for file_name in os.listdir(folder)
+                if file_name.lower().endswith(IMAGE_EXTENSIONS)
+            )
+    # if not found image files, exit
+    if not image_files:
+            sys.exit(f"ไม่พบไฟล์ภาพใน {folder}")
+    
+    # create landmarker
+    landmarker_pair = make_landmarker(video=False)  
+    
+    # create output folder
+    output_folder = os.path.join(folder, "results")
+    
+    # check status and count 
+    status_counts = {}
+    for file_name in image_files:
+        image_path = os.path.join(folder, file_name)
+        status = run_image(
+            exercise=exercise,
+            path=image_path,
+            explain=explain,
+            label=label,
+            save=save,
+            landmarker_pair=landmarker_pair,
+            output_folder=output_folder
+        )
+        # count status
+        status_counts[status] = status_counts.get(status, 0) + 1
+
+        # print summary
+        summary_parts = [f"ใช้ได้ {status_counts.get('ok', 0)}"]
+        for status, count in status_counts.items():
+            if status != "ok":
+                summary_parts.append(f"{SKIP_REASON[status]} {count}")
+
+        print(f"\nสรุป {len(image_files)} ภาพ: " + ", ".join(summary_parts))
 
 def run_camera(exercise: str, camera_index: int, save: str | None) -> None:
     """เปิดกล้อง ตรวจทุกเฟรม ปุ่ม 1/2/3 = บันทึกข้อมูล, e = อธิบาย, q = ออก"""
-    raise NotImplementedError("TODO(D)")
+    import cv2 
+
+    # prepare model
+    mediapipe, landmarker = make_landmarker(video=True)
+    # open camera
+    camera = cv2.VideoCapture(camera_index)
+    # cannot open
+    if not camera.isOpened():
+        sys.exit(f"เปิดกล้องไม่ได้ (กล้องหมายเลข {camera_index})")
+
+    # config short keys for save data 1, 2, 3
+    labels = list(EXERCISES[exercise]["templates"])
+    key_to_label = {ord(str(index + 1)): label for index, label in enumerate(labels)}
+
+    # print manual in Terminal
+    key_guides = " ".join(f"{index + 1}={label}" for index, label in enumerate(labels))
+    print(f"[{EXERCISES[exercise]['thai_name']}] หันข้างให้กล้องเห็นทั้งตัว | "
+            f"{key_guides} (เก็บข้อมูล) | e=อธิบาย | q=ออก")
+
+    # save start time 
+    start_time = time.time()
+    last_frame = None
+
+    # read frames from camera
+    while True:
+        frame_ok, frame = camera.read()
+        if not frame_ok:
+            print("ไม่สามารถอ่านภาพจากกล้องได้")
+            break
+
+        height, width = frame.shape[:2]
+
+        # calculate timestamp in milliseconds since start
+        timestamp_ms = int((time.time() - start_time) * 1000)
+        image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        mp_image = mediapipe.Image(image_format=mediapipe.ImageFormat.SRGB, data=image_rgb)
+
+        # detect position for the current frame
+        detection = landmarker.detect_for_video(mp_image, timestamp_ms)
+        side, points, landmarks, _ = extract(exercise, detection, width, height)
+
+        # analyze and draw results if points are detected
+        if points is not None:
+            try:
+                result = analyze(exercise, points)
+                # save last frame data
+                last_frame = {
+                    "side": side,
+                    "points": points,
+                    "landmarks": landmarks,
+                    "result": result
+                }
+                # check if the person is in the correct position
+                is_in_position = EXERCISES[exercise]["gate"](result["angle_values"])
+                if is_in_position:
+                    frame = draw(frame, points, result)
+                else:
+                    cv2.putText(frame, "go down into the position", (15, 35),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
+
+            # if error skip
+            except (ValueError, ZeroDivisionError):
+                pass  
+        else:
+            # if not found person or low visibility, show message
+            cv2.putText(frame, "show your full body from the side", (15, 35),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
+
+        # show video
+        window_title = f"Pose Coach - {exercise}"
+        cv2.imshow(window_title, frame)
+
+        # wait for key press
+        pressed_key = cv2.waitKey(1) & 0xFF
+
+        # 'q' = quit form program
+        if pressed_key == ord("q"):
+            break
+
+        # wait short key to save data
+        if last_frame and pressed_key in key_to_label:
+            target_label = key_to_label[pressed_key]
+            csv_path = save or f"data_{exercise}.csv"
+            save_row(csv_path, exercise, target_label, last_frame["side"],
+                        last_frame["result"]["angle_values"], last_frame["landmarks"])
+
+        # e = explain
+        if last_frame and pressed_key == ord("e"):
+            analyze(exercise, last_frame["points"], explain=True)
+            print_result(last_frame["result"])
+
+    # release camera and close windows
+    camera.release()
+    cv2.destroyAllWindows()
