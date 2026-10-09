@@ -159,8 +159,61 @@ def log_clean(exercise: str, label: str, path: str, status: str) -> None:
 
 def draw(image: np.ndarray, points: dict, result: dict) -> np.ndarray:
     """วาดโครงร่าง (เขียว = correct, แดง = อื่น), เส้นท่าที่ถูก (เหลือง) และข้อความผล"""
-    raise NotImplementedError("TODO(D)")
+    import cv2
+    
+    # define colors
+    COLOR_GREEN = (0, 200, 0)
+    COLOR_RED = (0, 0, 255)
+    COLOR_WHITE = (255, 255, 255)
+    COLOR_YELLOW = (0, 255, 255)
+    COLOR_BLACK = (0, 0, 0)
+    
+    # define correct, incorrect color
+    best_label = result['ranking'][0]['name']
+    main_color = COLOR_GREEN if best_label == 'correct' else COLOR_RED
+    
+    # convert (x, y) float to int 
+    def to_pixel(point):
+        return (int(point[0]), int(point[1]))
+    
+    # draw skeleton lines
+    exercise_name = result['exercise']
+    for start_name, end_name in EXERCISES[exercise_name]['lines']:
+        # find position
+        start_pos = to_pixel(points[start_name])
+        end_pos = to_pixel(points[end_name])
+        # draw line
+        cv2.line(image, start_pos, end_pos, main_color, thickness=4)
+    
+    # draw point 
+    for point in points.values():
+        cv2.circle(image, to_pixel(point), radius=6, color=COLOR_WHITE, thickness=-1)
 
+    # draw correct pose lines
+    for start, end in result["ghosts"]:
+        cv2.line(image, to_pixel(start), to_pixel(end), COLOR_YELLOW, thickness=3)
+        cv2.circle(image, to_pixel(end), radius=7, color=COLOR_YELLOW, thickness=2)
+        
+    # prepare text
+    angle_names = [name for name, *_ in EXERCISES[exercise_name]["angles"]]
+    angles_str = "  ".join(f"{name} {val:.0f}" for name, val in zip(angle_names, result["angle_values"]))
+    distance = result["ranking"][0]["euclidean"]
+    
+    text_lines = [
+            angles_str,                                              
+            f"{exercise_name}: {best_label} (distance={distance:.1f})",  
+            "yellow = correct form"                                  
+            ]
+    
+    # draw text in Left Top corner
+    for index, text in enumerate(text_lines):
+        text_pos = (15, 35 + (32 * index))
+        # border black
+        cv2.putText(image, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.75, COLOR_BLACK, thickness=5)
+        # text main color
+        cv2.putText(image, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.75, main_color, thickness=2)
+    
+    return image
 
 def run_image(exercise: str, path: str, explain: bool, label: str | None, save: str | None,
               landmarker_pair: tuple | None = None, output_folder: str | None = None) -> str:
