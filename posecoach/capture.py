@@ -107,7 +107,7 @@ def save_row(path: str, exercise: str, label: str, side: str, angle_values: np.n
     angle_names = [name for name, *_ in EXERCISES[exercise]['angles']]
     
     # open file mode = append
-    with open(path, 'a', newline='', encoding='utf-8') as file:
+    with open(path, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         # write header if new file
         if is_new_file:
@@ -132,13 +132,30 @@ def save_row(path: str, exercise: str, label: str, side: str, angle_values: np.n
             # ค่า visibility
             + [f"{landmark.visibility:.3f}" for landmark in landmarks]
         )
+        # write row
         writer.writerow(row)
 
     print(f"บันทึก {exercise}/{label} ลง {path}")
+    
 def log_clean(exercise: str, label: str, path: str, status: str) -> None:
     """บันทึกว่าภาพนี้ใช้ได้ (ok) หรือถูกตัดทิ้งเพราะอะไร → ใช้ทำสถิติการ clean ข้อมูล"""
-    raise NotImplementedError("TODO(D)")
+    # check have file?
+    is_new_file = not os.path.exists(path)
 
+    # prepare data
+    current_time = time.strftime('%Y-%m-%d %H:%M:%S')
+    image_name = os.path.basename(path
+    header = ["time", "exercise", "label", "image", "status"]
+    row = [current_time, exercise, label, image_name, status])
+    
+    # write file
+    with open(CLEAN_LOG, mode='a', new_line='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        # write header if new file
+        if is_new_file:
+            writer.writerow(header)
+        # write row
+        writer.writerow(row)
 
 def draw(image: np.ndarray, points: dict, result: dict) -> np.ndarray:
     """วาดโครงร่าง (เขียว = correct, แดง = อื่น), เส้นท่าที่ถูก (เหลือง) และข้อความผล"""
