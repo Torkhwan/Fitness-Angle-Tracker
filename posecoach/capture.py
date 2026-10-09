@@ -98,31 +98,62 @@ def extract(exercise: str, detection, width: int, height: int) -> tuple:
     points = prepare_points(exercise, points)
     return side, points, pose_landmarks, "ok"
 
-def save_row(path, exercise, label, side, angle_values, landmarks):
+def save_row(path: str, exercise: str, label: str, side: str, angle_values: np.ndarray, landmarks: list) -> None:
     """ต่อท้าย 1 แถวใน CSV (สร้างหัวตารางถ้าเป็นไฟล์ใหม่) คอลัมน์ดู docs/shared_structure.md"""
-    raise NotImplementedError("TODO(D)")
+    # check have file?
+    is_new_file = not os.path.exists(path)
+    
+    # get angle names 
+    angle_names = [name for name, *_ in EXERCISES[exercise]['angles']]
+    
+    # open file mode = append
+    with open(path, 'a', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        # write header if new file
+        if is_new_file:
+            header = (
+                ["time", "exercise", "label", "side", *angle_names]
+                + [f"{axis}{index}" for index in range(33) for axis in ("x", "y")]
+                + [f"v{index}" for index in range(33)]
+            )
+            writer.writerow(header)
+            
+        # write row
+        row = (
+            [
+                time.strftime("%Y-%m-%d %H:%M:%S"),
+                exercise,
+                label,
+                side,
+                *[f"{value:.3f}" for value in angle_values], 
+            ]
+            # พิกัด x, y
+            + [f"{coordinate:.5f}" for landmark in landmarks for coordinate in (landmark.x, landmark.y)]
+            # ค่า visibility
+            + [f"{landmark.visibility:.3f}" for landmark in landmarks]
+        )
+        writer.writerow(row)
 
-
-def log_clean(exercise, label, path, status):
+    print(f"บันทึก {exercise}/{label} ลง {path}")
+def log_clean(exercise: str, label: str, path: str, status: str) -> None:
     """บันทึกว่าภาพนี้ใช้ได้ (ok) หรือถูกตัดทิ้งเพราะอะไร → ใช้ทำสถิติการ clean ข้อมูล"""
     raise NotImplementedError("TODO(D)")
 
 
-def draw(image, points, result):
+def draw(image: np.ndarray, points: dict, result: dict) -> np.ndarray:
     """วาดโครงร่าง (เขียว = correct, แดง = อื่น), เส้นท่าที่ถูก (เหลือง) และข้อความผล"""
     raise NotImplementedError("TODO(D)")
 
 
-def run_image(exercise, path, explain, label, save, landmarker_pair=None, output_folder=None):
+def run_image(exercise: str, path: str, explain: bool, label: str | None, save: str | None,
+              landmarker_pair: tuple | None = None, output_folder: str | None = None) -> str:
     """ตรวจภาพ 1 ภาพ คืนสถานะ ok / unreadable / no_person / low_visibility / calc_error"""
     raise NotImplementedError("TODO(D)")
 
-
-def run_folder(exercise, folder, explain, label, save):
+def run_folder(exercise: str, folder: str, explain: bool, label: str | None, save: str | None) -> None:
     """ตรวจทุกภาพในโฟลเดอร์ (ไม่เข้าโฟลเดอร์ย่อย) รูปผลลัพธ์เก็บใน <โฟลเดอร์>/results"""
     raise NotImplementedError("TODO(D)")
 
-
-def run_camera(exercise, camera_index, save):
+def run_camera(exercise: str, camera_index: int, save: str | None) -> None:
     """เปิดกล้อง ตรวจทุกเฟรม ปุ่ม 1/2/3 = บันทึกข้อมูล, e = อธิบาย, q = ออก"""
     raise NotImplementedError("TODO(D)")
