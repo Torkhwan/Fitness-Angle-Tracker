@@ -45,11 +45,58 @@ def make_landmarker(video:bool = False) -> tuple:
     
     return mediapipe, vision.PoseLandmarker.create_from_options(options)
         
-def extract(exercise, detection, width, height):
-    """detection = ผลตรวจจับของ MediaPipe, width/height = ขนาดภาพ
-    คืน (side, points, landmarks ทั้ง 33, status)  status = ok / no_person / low_visibility"""
-    raise NotImplementedError("TODO(D)")
+def extract(exercise: str, detection, width: int, height: int) -> tuple:
+    """
+    detection = ผลตรวจจับของ MediaPipe, width/height = ขนาดภาพ
+    คืน (side, points, landmarks ทั้ง 33, status)  status = ok / no_person / low_visibility
+    """
+    # check person in image , pose_landmarks = list person detected, if no person detected return []
+    if not detection.pose_landmarks or len(detection.pose_landmarks) == 0:
+        return None, None, None, "no_person"
 
+    # get first person detected
+    pose_landmarks = detection.pose_landmarks[0]
+    
+    # helper function convert landmark to pixel coordinates
+    def to_pixel(landmark_idx):
+        lm = landmark_idx
+        # return numpy array
+        return np.array([lm.x * width, lm.y * height])
+    
+    # get points name form config.py
+    required_points = REQUIRED_POINTS[exercise]
+    
+    # check left/right side 
+    vis_score = {}
+    for side_name in ('left', 'right'):
+        scores = [landmark[LANDMARK_INDEX[side_name][pt]].visibility for pt in required_points]
+        vis_score[side_name] = sum(scores) / len(scores)
+    # select side
+    side = 'left' if vis_score['left'] >= vis_score['right'] else 'right'
+    
+    # check low visibility
+    if vis_score[side] < VISIBILITY_MIN:
+        return None, None, None, "low_visibility"
+
+    # squat, push-up use side view
+    points = {}
+    if exercise in ('squat', 'push-up'):
+        for pt in required_points:
+            idx = LANDMARK_INDEX[side][pt]
+            points[pt] = to_pixel(idx)
+            
+    # lunge use two legs front leg points and back leg points
+    elif exercise == 'lunge':
+        points['shoulder_point'] = to_pixel(LANDMARK_INDEX[side]['shoulder_point'])
+        points['hip_point'] = to_pixel(LANDMARK_INDEX[side]['hip_point'])
+        for s in ('left', 'right'):
+            for pt in ('knee_point', 'ankle_point', 'heel_point', 'toe_point'):
+                idx = LANDMARK_INDEX[s][pt]
+                points[f'{s}_{pt}'] = to_pixel(idx)
+
+    # prepare_points: ฟังก์ชันสำหรับจัดระเบียบจุด
+    points = prepare_points(exercise, points)
+    return side, points, pose_landmarks, "ok"
 
 def save_row(path, exercise, label, side, angle_values, landmarks):
     """ต่อท้าย 1 แถวใน CSV (สร้างหัวตารางถ้าเป็นไฟล์ใหม่) คอลัมน์ดู docs/shared_structure.md"""
