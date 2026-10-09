@@ -218,8 +218,71 @@ def draw(image: np.ndarray, points: dict, result: dict) -> np.ndarray:
 def run_image(exercise: str, path: str, explain: bool, label: str | None, save: str | None,
               landmarker_pair: tuple | None = None, output_folder: str | None = None) -> str:
     """ตรวจภาพ 1 ภาพ คืนสถานะ ok / unreadable / no_person / low_visibility / calc_error"""
-    raise NotImplementedError("TODO(D)")
+    import cv2  
 
+    # prepare model
+    mediapipe, landmarker = landmarker_pair or make_landmarker(video=False)
+
+    # read imgae file
+    image = cv2.imread(path)
+    if image is None:
+        status = "unreadable"
+    else:
+        # image size
+        height, width = image.shape[:2]
+
+        # convert BGR to RGB and send to mediapipe
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        mp_image = mediapipe.Image(image_format=mediapipe.ImageFormat.SRGB, data=image_rgb)
+        detection = landmarker.detect(mp_image)
+        
+        # get position poits and side
+        side, points, landmarks, status = extract(exercise, detection, width, height)
+        
+        # check status and anlyze
+        if status == "ok":
+            try:
+                result = analyze(exercise, points, explain=explain)
+            except (ValueError, ZeroDivisionError):
+                status = "calc_error" 
+        
+        # save history in clean_log
+        if label:
+            log_clean(exercise, label, path, status)
+        
+        # stop if image not ok  
+        image_name = os.path.basename(path)
+        if status != "ok":
+            print(f"ข้าม {image_name}: {SKIP_REASON[status]}")
+            return status
+
+        # show analyze result
+        print(f"[{image_name}] ใช้ข้าง: {side}")
+        print_result(result)
+        
+        # save angle and position data to CSV
+        if label:
+            csv_path = save or f"data_{exercise}.csv"
+            save_row(csv_path, exercise, label, side, result["angle_values"], landmarks)
+        
+        # draw and save new image
+        base_name = os.path.splitext(image_name)[0]
+        output_filename = f"{base_name}_result.jpg"
+        
+        # if folder create folder if not exist
+        if output_folder:
+            os.makedirs(output_folder, exist_ok=True)
+            output_path = os.path.join(output_folder, output_filename)
+        else:
+            output_path = os.path.join(os.path.dirname(path), output_filename)
+
+        # draw and save image
+        annotated_image = draw(image, points, result)
+        cv2.imwrite(output_path, annotated_image)
+        print("บันทึกรูปผลลัพธ์:", output_path)
+
+        return status
+    
 def run_folder(exercise: str, folder: str, explain: bool, label: str | None, save: str | None) -> None:
     """ตรวจทุกภาพในโฟลเดอร์ (ไม่เข้าโฟลเดอร์ย่อย) รูปผลลัพธ์เก็บใน <โฟลเดอร์>/results"""
     raise NotImplementedError("TODO(D)")
