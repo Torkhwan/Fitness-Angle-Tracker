@@ -26,8 +26,64 @@ from selftest import selftest
 
 def main():
     """อ่านตัวเลือกจากคำสั่ง แล้วเรียกฟังก์ชันที่ตรงกับคำสั่งนั้น"""
-    raise NotImplementedError("TODO(D)")
+    # create obj
+    parser = argparse.ArgumentParser(description="Pose Coach - Squat / Push-up / Lunge")
+    # select exercise 
+    parser.add_argument("--exercise", choices=list(EXERCISES), default="squat")
+    # 
+    parser.add_argument('--selftest', action='store_true')
+    # image file or folder to process
+    parser.add_argument('--image', help='ไฟล์ภาพ หรือโฟลเดอร์ภาพ')
+    # camera index
+    parser.add_argument('--camera', type=int, help='กล้องที่ใช้ (0, 1, 2, ...)')
+    # explain the result
+    parser.add_argument('--explain', action='store_true')
+    # label for the image
+    parser.add_argument('--label')
+    # add file name to save the result
+    parser.add_argument("--save", help='ไฟล์ CSV (ค่าเริ่มต้น data_<exercise>.csv)')
+    # build templates from CSV files
+    parser.add_argument("--build-templates", metavar='CSV', nargs='+')
+    # evaluate CSV file
+    parser.add_argument("--evaluate", metavar='CSV', nargs='+')
+    # setting test ratio
+    parser.add_argument("--test-ratio", type=float, default=0.2, help='สัดส่วนข้อมูลทดสอบ (ค่าเริ่มต้น 0.2)')
 
+    # get all params to process
+    arguments = parser.parse_args()
+    
+    # if not label exit
+    if arguments.label and arguments.label not in EXERCISES[arguments.exercise]['templates']:
+      sys.exit(f"--label ของ {arguments.exercise} ต้องเป็น: {', '.join(EXERCISES[arguments.exercise]['templates'])}")
+    
+    # check run selftest
+    if arguments.selftest:
+      # run selftest if pass exit code 0 else 1
+      sys.exit(0 if selftest() else 1)
+    
+    # check run build templates
+    if arguments.build_templates:
+      return build_templates(arguments.build_templates)
+    
+    # check run evaluate
+    if arguments.evaluate:
+      return evaluate(arguments.evaluate, test_ratio=arguments.test_ratio)
+    
+    # if image is provided and is path a folder?
+    if arguments.image and os.path.isdir(arguments.image):
+      # run folder
+      return run_folder(arguments.exercise, arguments.image, arguments.explain, arguments.label, arguments.save)
+    if arguments.image:
+      # run image
+      status = run_image(arguments.exercise, arguments.image, arguments.explain, arguments.label, arguments.save)
+      sys.exit(0 if status == "ok" else 1)
+    
+    # if camera index is provided
+    if arguments.camera is not None:
+      return run_camera(arguments.exercise, arguments.camera, arguments.save)
 
+    # if not any of conditions, print help
+    parser.print_help()
+    
 if __name__ == "__main__":
     main()
