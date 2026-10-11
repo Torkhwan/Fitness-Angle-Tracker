@@ -33,14 +33,16 @@ def make_landmarker(video:bool = False) -> tuple:
     # select mode
     mode = vision.RunningMode.VIDEO if video else vision.RunningMode.IMAGE
     
+    # Support Thai name folder path
+    with open(MODEL_PATH, "rb") as model_file:
+        model_buffer = model_file.read()
+
     # setting
     options = vision.PoseLandmarkerOptions(
-        # where is the model file
-        base_options = mediapipe_python.BaseOptions(model_asset_path=MODEL_PATH),
-        # which mode to run 
-        running_mode = mode,
-        # focus one person only
-        num_poses = 1
+        base_options=mediapipe_python.BaseOptions(model_asset_buffer=model_buffer),
+        running_mode=mode,
+        # detected 1 person only
+        num_poses=1,
     )
     
     return mediapipe, vision.PoseLandmarker.create_from_options(options)
@@ -59,7 +61,7 @@ def extract(exercise: str, detection, width: int, height: int) -> tuple:
     
     # helper function convert landmark to pixel coordinates
     def to_pixel(landmark_idx):
-        lm = landmark_idx
+        lm = pose_landmarks[landmark_idx]
         # return numpy array
         return np.array([lm.x * width, lm.y * height])
     
@@ -69,7 +71,7 @@ def extract(exercise: str, detection, width: int, height: int) -> tuple:
     # check left/right side 
     vis_score = {}
     for side_name in ('left', 'right'):
-        scores = [landmark[LANDMARK_INDEX[side_name][pt]].visibility for pt in required_points]
+        scores = [pose_landmarks[LANDMARK_INDEX[side_name][pt]].visibility for pt in required_points]
         vis_score[side_name] = sum(scores) / len(scores)
     # select side
     side = 'left' if vis_score['left'] >= vis_score['right'] else 'right'
@@ -80,7 +82,7 @@ def extract(exercise: str, detection, width: int, height: int) -> tuple:
 
     # squat, push-up use side view
     points = {}
-    if exercise in ('squat', 'push-up'):
+    if exercise in ('squat', 'pushup'):
         for pt in required_points:
             idx = LANDMARK_INDEX[side][pt]
             points[pt] = to_pixel(idx)
@@ -140,16 +142,16 @@ def save_row(path: str, exercise: str, label: str, side: str, angle_values: np.n
 def log_clean(exercise: str, label: str, path: str, status: str) -> None:
     """บันทึกว่าภาพนี้ใช้ได้ (ok) หรือถูกตัดทิ้งเพราะอะไร → ใช้ทำสถิติการ clean ข้อมูล"""
     # check have file?
-    is_new_file = not os.path.exists(path)
+    is_new_file = not os.path.exists(CLEAN_LOG)
 
     # prepare data
     current_time = time.strftime('%Y-%m-%d %H:%M:%S')
-    image_name = os.path.basename(path
+    image_name = os.path.basename(path)
     header = ["time", "exercise", "label", "image", "status"]
-    row = [current_time, exercise, label, image_name, status])
+    row = [current_time, exercise, label, image_name, status]
     
     # write file
-    with open(CLEAN_LOG, mode='a', new_line='', encoding='utf-8') as file:
+    with open(CLEAN_LOG, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         # write header if new file
         if is_new_file:
@@ -322,7 +324,7 @@ def run_folder(exercise: str, folder: str, explain: bool, label: str | None, sav
             if status != "ok":
                 summary_parts.append(f"{SKIP_REASON[status]} {count}")
 
-        print(f"\nสรุป {len(image_files)} ภาพ: " + ", ".join(summary_parts))
+    print(f"\nสรุป {len(image_files)} ภาพ: " + ", ".join(summary_parts))
 
 def run_camera(exercise: str, camera_index: int, save: str | None) -> None:
     """เปิดกล้อง ตรวจทุกเฟรม ปุ่ม 1/2/3 = บันทึกข้อมูล, e = อธิบาย, q = ออก"""
