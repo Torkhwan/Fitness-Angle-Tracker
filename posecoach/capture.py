@@ -349,19 +349,24 @@ def run_camera(exercise: str, camera_index: int, save: str | None) -> None:
 
     # save start time 
     start_time = time.time()
-    last_frame = None
-
-    # read frames from camera
+    # last timestamp in ms
+    last_timestamp_ms = -1
+    
     while True:
         frame_ok, frame = camera.read()
         if not frame_ok:
             print("ไม่สามารถอ่านภาพจากกล้องได้")
             break
-
+        # prepare last frame data for save
+        last_frame = None
         height, width = frame.shape[:2]
 
         # calculate timestamp in milliseconds since start
         timestamp_ms = int((time.time() - start_time) * 1000)
+        if timestamp_ms <= last_timestamp_ms:
+            timestamp_ms = last_timestamp_ms + 1
+        last_timestamp_ms = timestamp_ms
+
         image_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         mp_image = mediapipe.Image(image_format=mediapipe.ImageFormat.SRGB, data=image_rgb)
 
