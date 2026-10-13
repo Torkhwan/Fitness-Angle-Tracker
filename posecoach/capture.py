@@ -248,42 +248,42 @@ def run_image(exercise: str, path: str, explain: bool, label: str | None, save: 
             except (ValueError, ZeroDivisionError):
                 status = "calc_error" 
         
-        # save history in clean_log
-        if label:
-            log_clean(exercise, label, path, status)
-        
-        # stop if image not ok  
-        image_name = os.path.basename(path)
-        if status != "ok":
-            print(f"ข้าม {image_name}: {SKIP_REASON[status]}")
-            return status
-
-        # show analyze result
-        print(f"[{image_name}] ใช้ข้าง: {side}")
-        print_result(result)
-        
-        # save angle and position data to CSV
-        if label:
-            csv_path = save or f"data_{exercise}.csv"
-            save_row(csv_path, exercise, label, side, result["angle_values"], landmarks)
-        
-        # draw and save new image
-        base_name = os.path.splitext(image_name)[0]
-        output_filename = f"{base_name}_result.jpg"
-        
-        # if folder create folder if not exist
-        if output_folder:
-            os.makedirs(output_folder, exist_ok=True)
-            output_path = os.path.join(output_folder, output_filename)
-        else:
-            output_path = os.path.join(os.path.dirname(path), output_filename)
-
-        # draw and save image
-        annotated_image = draw(image, points, result)
-        cv2.imwrite(output_path, annotated_image)
-        print("บันทึกรูปผลลัพธ์:", output_path)
-
+    # save history in clean_log
+    if label:
+        log_clean(exercise, label, path, status)
+    
+    # stop if image not ok  
+    image_name = os.path.basename(path)
+    if status != "ok":
+        print(f"ข้าม {image_name}: {SKIP_REASON[status]}")
         return status
+
+    # show analyze result
+    print(f"[{image_name}] ใช้ข้าง: {side}")
+    print_result(result)
+    
+    # save angle and position data to CSV
+    if label:
+        csv_path = save or f"data_{exercise}.csv"
+        save_row(csv_path, exercise, label, side, result["angle_values"], landmarks)
+    
+    # draw and save new image
+    base_name = os.path.splitext(image_name)[0]
+    output_filename = f"{base_name}_result.jpg"
+    
+    # if folder create folder if not exist
+    if output_folder:
+        os.makedirs(output_folder, exist_ok=True)
+        output_path = os.path.join(output_folder, output_filename)
+    else:
+        output_path = os.path.join(os.path.dirname(path), output_filename)
+
+    # draw and save image
+    annotated_image = draw(image, points, result)
+    cv2.imwrite(output_path, annotated_image)
+    print("บันทึกรูปผลลัพธ์:", output_path)
+
+    return status
     
 def run_folder(exercise: str, folder: str, explain: bool, label: str | None, save: str | None) -> None:
     """ตรวจทุกภาพในโฟลเดอร์ (ไม่เข้าโฟลเดอร์ย่อย) รูปผลลัพธ์เก็บใน <โฟลเดอร์>/results"""
