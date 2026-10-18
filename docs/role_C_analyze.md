@@ -167,6 +167,12 @@ python pose_coach.py --build-templates data_squat.csv
 python pose_coach.py --evaluate data_squat.csv
 ```
 
+`--test-ratio 0` = ไม่แบ่งข้อมูล ใช้ท่าต้นแบบจริงใน `templates.json` ทายทุกแถว (ค่าที่ใช้ในรายงาน: 312/360 = 86.7%)
+
+```bash
+python pose_coach.py --evaluate data_squat.csv data_pushup.csv data_lunge.csv --test-ratio 0
+```
+
 ตรวจว่า n รวมตรงกับจำนวนภาพที่ใช้ได้ และ complete + check + ตัดทิ้ง = count_before หลังทดลองเสร็จลบ `templates.json` และ CSV ทดลองทิ้ง
 
 ## เสร็จเมื่อ

@@ -128,7 +128,7 @@ from mediapipe.tasks.python import vision
 | `--save` | ไฟล์ CSV (ไม่ใส่ = `data_<exercise>.csv`) |
 | `--build-templates` | `metavar="CSV"`, `nargs="+"` |
 | `--evaluate` | `metavar="CSV"`, `nargs="+"` |
-| `--test-ratio` | `type=float`, ค่าเริ่มต้น `0.2` |
+| `--test-ratio` | `type=float`, ค่าเริ่มต้น `0.2` (`0` = ใช้ templates.json ทายทุกแถว) |
 
 ลำดับการตรวจ (เจออันไหนก่อนทำอันนั้นแล้วจบ)
 

@@ -47,7 +47,7 @@ def main():
     # evaluate CSV file
     parser.add_argument("--evaluate", metavar='CSV', nargs='+')
     # setting test ratio
-    parser.add_argument("--test-ratio", type=float, default=0.2, help='สัดส่วนข้อมูลทดสอบ (ค่าเริ่มต้น 0.2)')
+    parser.add_argument("--test-ratio", type=float, default=0.2, help='สัดส่วนข้อมูลทดสอบ (ค่าเริ่มต้น 0.2, 0 = ใช้ท่าต้นแบบจริงใน templates.json ทายทุกแถว)')
 
     # get all params to process
     arguments = parser.parse_args()

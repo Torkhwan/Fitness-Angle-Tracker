@@ -100,12 +100,23 @@ def build_templates(paths):
 def evaluate(paths, test_ratio=0.2, seed=0):
     """แบ่งข้อมูลแต่ละ label เป็น train/test → ท่าต้นแบบ = ค่าเฉลี่ยของ train
     → ทาย test ด้วยท่าต้นแบบที่ Euclidean distance น้อยที่สุด → accuracy + confusion matrix
-    (ไม่เขียนทับ templates.json)"""
+    (ไม่เขียนทับ templates.json)
+    test_ratio = 0 → ใช้ท่าต้นแบบจริงของโปรแกรม (templates.json) ทายทุกแถว"""
     groups, _ = load_dataset(paths)
     random_generator = np.random.default_rng(seed)
+    saved_templates = {}
+    if test_ratio == 0:
+        if not os.path.exists(TEMPLATE_PATH):
+            sys.exit("ไม่พบ templates.json ให้รัน --build-templates ก่อน")
+        with open(TEMPLATE_PATH, encoding="utf-8") as file:
+            saved_templates = json.load(file)
     for exercise, label_rows in groups.items():
         templates, test_samples = {}, []
         for label, angle_matrix in label_rows.items():
+            if test_ratio == 0:
+                templates[label] = np.array(saved_templates[exercise][label], float)
+                test_samples += [(label, angle_values) for angle_values in angle_matrix]
+                continue
             test_count = max(1, round(len(angle_matrix) * test_ratio)) if len(angle_matrix) >= 2 else 0
             shuffled_indices = random_generator.permutation(len(angle_matrix))
             test_samples += [(label, angle_matrix[index]) for index in shuffled_indices[:test_count]]
@@ -120,8 +131,9 @@ def evaluate(paths, test_ratio=0.2, seed=0):
             confusion[labels.index(label), labels.index(predicted_label)] += 1
         accuracy = percent(np.trace(confusion), confusion.sum())
         print(f"\n----- {EXERCISES[exercise]['thai_name']} ({exercise}) -----")
-        print(f"train {sum(len(angle_matrix) for angle_matrix in label_rows.values()) - len(test_samples)} แถว, "
-              f"test {len(test_samples)} แถว")
+        row_count = sum(len(angle_matrix) for angle_matrix in label_rows.values())
+        train_count = row_count if test_ratio == 0 else row_count - len(test_samples)
+        print(f"train {train_count} แถว, test {len(test_samples)} แถว")
         print("Confusion matrix (แถว = label จริง, คอลัมน์ = ที่ระบบทาย):")
         column_width = max(len(label) for label in labels) + 2
         print(" " * column_width + "".join(f"{label:>{column_width}}" for label in labels))
