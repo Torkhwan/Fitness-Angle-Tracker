@@ -99,7 +99,9 @@ from mediapipe.tasks.python import vision
 ### `run_camera(exercise, camera_index, save)`
 
 1. `make_landmarker(video=True)`, `camera = cv2.VideoCapture(camera_index)` เปิดไม่ได้ → `sys.exit("เปิดกล้องไม่ได้")`
-2. ปุ่ม `1` `2` `3` = label ตามลำดับใน `EXERCISES[exercise]["templates"]` (เก็บเป็น `key_to_label`) พิมพ์วิธีใช้ปุ่มก่อนเริ่ม
+2. ปุ่ม `1` `2` `3` = label ตามลำดับใน `EXERCISES[exercise]["templates"]` (เก็บเป็น `key_to_label`) พิมพ์วิธีใช้ปุ่มก่อนเริ่ม (ทำใน `camera_mode(exercise)` ซึ่งคืนชื่อหน้าต่างและ `key_to_label`)
+   - หน้าต่าง `cv2.namedWindow("FAT Pose Coach", cv2.WINDOW_NORMAL)` ขนาดเริ่มต้น 1280×960 ลากขยายได้ ชื่อบนแถบเป็น `FAT Pose Coach - <ท่า>` (`cv2.setWindowTitle`)
+   - `set_window_icon(ชื่อหน้าต่าง)` ใส่ไอคอน `fat.ico` ที่หน้าต่างและ taskbar (Windows เท่านั้น ระบบอื่นข้ามไป)
 3. วนอ่านเฟรม
    - ตรวจด้วย `landmarker.detect_for_video(ภาพ, เวลาเป็นมิลลิวินาทีนับจาก start_time)` (เวลาต้องเพิ่มขึ้นทุกเฟรม)
    - `extract` ได้จุด → `analyze` → เก็บ `side`, `points`, `landmarks`, `result` ของเฟรมล่าสุดไว้ใน `last_frame`
@@ -108,6 +110,7 @@ from mediapipe.tasks.python import vision
    - ดัก `ValueError`, `ZeroDivisionError` จาก `analyze` แล้วข้ามเฟรมนั้น
    - `cv2.imshow`, `pressed_key = cv2.waitKey(1) & 0xFF`
    - `q` ออก / `1` `2` `3` → `save_row` ด้วยเฟรมล่าสุด / `e` → `analyze(..., explain=True)` กับเฟรมล่าสุด
+   - `s` `p` `l` → สลับเป็น squat / pushup / lunge ทันที (เรียก `camera_mode` ใหม่ เปลี่ยนชื่อหน้าต่างและปุ่ม 1 2 3) `--save` ใช้กับท่าเริ่มต้นเท่านั้น ท่าอื่นบันทึกลง `data_<ท่า>.csv`
 4. จบแล้ว `camera.release()` และ `cv2.destroyAllWindows()`
 
 ## `pose_coach.py`: `main()`
@@ -159,7 +162,7 @@ python pose_coach.py --exercise squat --camera 0
 - มีรูปใน `photos/test/results/` เส้นทับตัวคนถูกตำแหน่ง เส้นเหลืองออกจากสะโพก
 - `test.csv` มีหัวตาราง 106 คอลัมน์ และจำนวนแถว = จำนวนภาพที่ใช้ได้
 - `clean_log.csv` มีแถวครบทุกภาพที่ป้อน รวมภาพที่ใช้ไม่ได้ (ลองใส่ภาพที่ไม่มีคน 1 ภาพ)
-- กล้อง: ปุ่ม `1` `2` `3` `e` `q` ทำงาน
+- กล้อง: ปุ่ม `1` `2` `3` `e` `q` `s` `p` `l` ทำงาน หน้าต่างลากขยายได้ และมีไอคอน FAT
 
 ทดสอบเสร็จลบ `test.csv` และ `clean_log.csv` ทิ้ง ไม่ commit ไฟล์ทดลอง
 

@@ -326,9 +326,42 @@ def run_folder(exercise: str, folder: str, explain: bool, label: str | None, sav
 
     print(f"\nสรุป {len(image_files)} ภาพ: " + ", ".join(summary_parts))
 
+ICON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fat.ico")
+# short keys for switching exercise while the camera is running
+SWITCH_KEYS = {ord("s"): "squat", ord("p"): "pushup", ord("l"): "lunge"}
+
+def set_window_icon(window_title: str) -> None:
+    """ใส่ไอคอน fat.ico ให้หน้าต่างและ taskbar (Windows เท่านั้น ระบบอื่นข้ามไป)"""
+    if sys.platform != "win32" or not os.path.exists(ICON_PATH):
+        return
+    import ctypes
+    user32 = ctypes.windll.user32
+    user32.FindWindowW.restype = ctypes.c_void_p
+    user32.LoadImageW.restype = ctypes.c_void_p
+    user32.SendMessageW.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_void_p, ctypes.c_void_p]
+    # separate taskbar group from python.exe so the taskbar shows our icon
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("FAT.PoseCoach")
+    window = user32.FindWindowW(None, window_title)
+    # 1 = IMAGE_ICON, 0x10 = LR_LOADFROMFILE
+    icon_big = user32.LoadImageW(None, ICON_PATH, 1, 256, 256, 0x10)
+    icon_small = user32.LoadImageW(None, ICON_PATH, 1, 32, 32, 0x10)
+    if window and icon_big and icon_small:
+        # 0x80 = WM_SETICON, 1 = ICON_BIG, 0 = ICON_SMALL
+        user32.SendMessageW(window, 0x80, 1, icon_big)
+        user32.SendMessageW(window, 0x80, 0, icon_small)
+
+def camera_mode(exercise: str) -> tuple:
+    """คืน (ชื่อหน้าต่าง, ปุ่ม 1/2/3 → label) ของท่านี้ และพิมพ์วิธีใช้ใน Terminal"""
+    labels = list(EXERCISES[exercise]["templates"])
+    key_to_label = {ord(str(index + 1)): label for index, label in enumerate(labels)}
+    key_guides = " ".join(f"{index + 1}={label}" for index, label in enumerate(labels))
+    print(f"[{EXERCISES[exercise]['thai_name']}] หันข้างให้กล้องเห็นทั้งตัว | "
+            f"{key_guides} (เก็บข้อมูล) | s/p/l=สลับท่า | e=อธิบาย | q=ออก")
+    return f"FAT Pose Coach - {exercise}", key_to_label
+
 def run_camera(exercise: str, camera_index: int, save: str | None) -> None:
-    """เปิดกล้อง ตรวจทุกเฟรม ปุ่ม 1/2/3 = บันทึกข้อมูล, e = อธิบาย, q = ออก"""
-    import cv2 
+    """เปิดกล้อง ตรวจทุกเฟรม ปุ่ม 1/2/3 = บันทึกข้อมูล, s/p/l = สลับท่า, e = อธิบาย, q = ออก"""
+    import cv2
 
     # prepare model
     mediapipe, landmarker = make_landmarker(video=True)
@@ -338,14 +371,17 @@ def run_camera(exercise: str, camera_index: int, save: str | None) -> None:
     if not camera.isOpened():
         sys.exit(f"เปิดกล้องไม่ได้ (กล้องหมายเลข {camera_index})")
 
-    # config short keys for save data 1, 2, 3
-    labels = list(EXERCISES[exercise]["templates"])
-    key_to_label = {ord(str(index + 1)): label for index, label in enumerate(labels)}
+    # --save is for the starting exercise only (other exercises go to data_<exercise>.csv)
+    start_exercise = exercise
+    window_title, key_to_label = camera_mode(exercise)
 
-    # print manual in Terminal
-    key_guides = " ".join(f"{index + 1}={label}" for index, label in enumerate(labels))
-    print(f"[{EXERCISES[exercise]['thai_name']}] หันข้างให้กล้องเห็นทั้งตัว | "
-            f"{key_guides} (เก็บข้อมูล) | e=อธิบาย | q=ออก")
+    # resizable window (drag or maximize), bigger default size
+    # window_name stays the same, only the title bar text changes when switching exercise
+    window_name = "FAT Pose Coach"
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(window_name, 1280, 960)
+    cv2.setWindowTitle(window_name, window_title)
+    set_window_icon(window_title)
 
     # save start time 
     start_time = time.time()
@@ -402,8 +438,7 @@ def run_camera(exercise: str, camera_index: int, save: str | None) -> None:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
 
         # show video
-        window_title = f"Pose Coach - {exercise}"
-        cv2.imshow(window_title, frame)
+        cv2.imshow(window_name, frame)
 
         # wait for key press
         pressed_key = cv2.waitKey(1) & 0xFF
@@ -412,10 +447,17 @@ def run_camera(exercise: str, camera_index: int, save: str | None) -> None:
         if pressed_key == ord("q"):
             break
 
+        # s/p/l = switch exercise without restarting
+        if pressed_key in SWITCH_KEYS and SWITCH_KEYS[pressed_key] != exercise:
+            exercise = SWITCH_KEYS[pressed_key]
+            window_title, key_to_label = camera_mode(exercise)
+            cv2.setWindowTitle(window_name, window_title)
+            continue
+
         # wait short key to save data
         if last_frame and pressed_key in key_to_label:
             target_label = key_to_label[pressed_key]
-            csv_path = save or f"data_{exercise}.csv"
+            csv_path = (save if save and exercise == start_exercise else None) or f"data_{exercise}.csv"
             save_row(csv_path, exercise, target_label, last_frame["side"],
                         last_frame["result"]["angle_values"], last_frame["landmarks"])
 
