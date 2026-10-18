@@ -211,7 +211,6 @@ def draw(image: np.ndarray, points: dict, result: dict) -> np.ndarray:
     for index, text in enumerate(text_lines):
         text_pos = (15, 35 + (32 * index))
         # border black
-        # cv2.putText(img, text, org, fontFace, fontScale, color, thickness=1, lineType=cv2.LINE_8)
         cv2.putText(image, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.75, COLOR_BLACK, thickness=5)
         # text main color
         cv2.putText(image, text, text_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.75, main_color, thickness=2)
@@ -438,14 +437,13 @@ def run_camera(exercise: str, camera_index: int, save: str | None) -> None:
             cv2.putText(frame, "show your full body from the side", (15, 35),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
 
-        # show exercise label
+        # show exercise label (black border, then orange text on top)
         exercise_label = f"{exercise.upper()}"
         cv2.putText(frame, exercise_label, (width - 90, height - 15),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), thickness=8)
-        
         cv2.putText(frame, exercise_label, (width - 90, height - 15),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), thickness=8)
-        
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), thickness=2)
+
         # show video
         cv2.imshow(window_name, frame)
 
