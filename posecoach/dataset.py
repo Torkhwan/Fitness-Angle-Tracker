@@ -1,7 +1,7 @@
 """
 dataset.py  งาน C: อ่านข้อมูล, clean, สถิติ, สร้างท่าต้นแบบ, วัดความแม่นยำ
 
-คำอธิบายงานและสูตร: docs/role_C_analyze.md
+คำอธิบายงานและสูตร: docs/analyze_dataset.md
 ทดสอบ: python pose_coach.py --build-templates data_squat.csv   (หลังเก็บข้อมูลแล้ว)
 """
 import csv
