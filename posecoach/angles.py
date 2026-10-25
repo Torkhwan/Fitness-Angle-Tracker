@@ -1,7 +1,7 @@
 """
 angles.py  งาน B: เตรียมจุด → มุมของแต่ละท่า → เส้นท่าที่ถูก
 
-คำอธิบายงานและสูตร: docs/role_B_vector.md
+คำอธิบายงานและสูตร: docs/vector_angles.md
 ทดสอบ: python check.py angles
 """
 import math

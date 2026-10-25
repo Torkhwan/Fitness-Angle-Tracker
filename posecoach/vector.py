@@ -1,7 +1,7 @@
 """
 vector.py  งาน B: เวกเตอร์ (บท 1-2)
 
-คำอธิบายงานและสูตร: docs/role_B_vector.md
+คำอธิบายงานและสูตร: docs/vector_angles.md
 ทดสอบ: python check.py vector
 ไฟล์นี้ต้องไม่ import ไฟล์อื่นของโครงงาน (ทุกคนเรียกใช้ไฟล์นี้)
 """

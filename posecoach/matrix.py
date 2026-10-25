@@ -1,7 +1,7 @@
 """
 matrix.py  งาน A: เมทริกซ์และการ normalize (บท 4, 5, 7, 8, 9)
 
-คำอธิบายงานและสูตร: docs/role_A_matrix.md
+คำอธิบายงานและสูตร: docs/matrix.md
 ทดสอบ: python check.py matrix   และ   python check.py normalize
 """
 import math
@@ -101,7 +101,7 @@ def floor_vector(exercise, flipped_points):
 def build_normalization_matrix(exercise, flipped_points):
     """คืน (normalization_matrix, info)
     info = {"translation_matrix", "facing_reflection_matrix", "rotation_matrix", "scaling_matrix",
-            "floor", "cos", "sin", "theta", "torso"}  (ดู docs/shared_structure.md)"""
+            "floor", "cos", "sin", "theta", "torso"}  (ดู docs/data_structure.md)"""
     # 1. Translation (ย้ายสะโพกไป (0,0))
     translation_matrix = translation(-flipped_points["hip_point"][0], -flipped_points["hip_point"][1])
     # 2. Reflection (พลิกให้หันขวา)
@@ -133,7 +133,7 @@ def format_number(value):
     return f"{value:.4f}"
 
 def print_explain(image_points, result):
-    """พิมพ์การคำนวณทีละขั้นจาก result (หัวข้อ 1-6 ตาม docs/role_A_matrix.md)"""
+    """พิมพ์การคำนวณทีละขั้นจาก result (หัวข้อ 1-6 ตาม docs/matrix.md)"""
     np.set_printoptions(precision=4, suppress=True)
     exercise, info, exercise_config = result["exercise"], result["info"], EXERCISES[result["exercise"]]
     print(f"\n================ คำอธิบายการคำนวณ: {exercise_config['thai_name']} ================")

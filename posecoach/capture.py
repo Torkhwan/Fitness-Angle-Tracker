@@ -1,7 +1,7 @@
 """
 capture.py  งาน D: รับภาพ/กล้อง → ดึงพิกัดด้วย MediaPipe → บันทึกข้อมูล → วาดผล
 
-คำอธิบายงาน: docs/role_D_capture.md
+คำอธิบายงาน: docs/capture.md
 MediaPipe ใช้แค่ดึงพิกัดข้อต่อ การคำนวณทั้งหมดอยู่ในไฟล์ของงาน A, B, C
 import cv2 และ mediapipe ไว้ "ในฟังก์ชัน" เพื่อให้ selftest รันได้โดยไม่ต้องโหลดสองตัวนี้
 """
@@ -101,7 +101,7 @@ def extract(exercise: str, detection, width: int, height: int) -> tuple:
     return side, points, pose_landmarks, "ok"
 
 def save_row(path: str, exercise: str, label: str, side: str, angle_values: np.ndarray, landmarks: list) -> None:
-    """ต่อท้าย 1 แถวใน CSV (สร้างหัวตารางถ้าเป็นไฟล์ใหม่) คอลัมน์ดู docs/shared_structure.md"""
+    """ต่อท้าย 1 แถวใน CSV (สร้างหัวตารางถ้าเป็นไฟล์ใหม่) คอลัมน์ดู docs/data_structure.md"""
     # check have file?
     is_new_file = not os.path.exists(path)
     

@@ -1,7 +1,7 @@
 """
 analyze.py  งาน C: เทียบท่าต้นแบบและสรุปผล
 
-คำอธิบายงานและสูตร: docs/role_C_analyze.md
+คำอธิบายงานและสูตร: docs/analyze_dataset.md
 ทดสอบ: python selftest.py  (ต้องรองาน A และ B merge เข้า main ก่อน)
 """
 import json
@@ -28,7 +28,7 @@ def load_templates(exercise):
 
 
 def analyze(exercise, image_points, explain=False, templates=None):
-    """พิกัดภาพ → result  (key ทั้งหมดดู docs/shared_structure.md)"""
+    """พิกัดภาพ → result  (key ทั้งหมดดู docs/data_structure.md)"""
     exercise_config = EXERCISES[exercise]
     flip_y_matrix = reflect_y()
     flipped_points = {point_name: apply(flip_y_matrix, point) for point_name, point in image_points.items()}

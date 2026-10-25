@@ -12,7 +12,7 @@ MediaPipe ใช้แค่ดึงพิกัดข้อต่อ ส่ว
   python pose_coach.py --build-templates data_squat.csv data_pushup.csv data_lunge.csv
   python pose_coach.py --evaluate data_squat.csv
 
-ไฟล์นี้  งาน D: main() รับคำสั่งแล้วส่งต่อให้ฟังก์ชันของแต่ละงาน (docs/role_D_capture.md)
+ไฟล์นี้  งาน D: main() รับคำสั่งแล้วส่งต่อให้ฟังก์ชันของแต่ละงาน (docs/capture.md)
 """
 import argparse
 import os
